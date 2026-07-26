@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Shaman Hotspot — Connexion ticket</title>
+<meta name="theme-color" content="#0B1E1C">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  :root{
+    --bg:#0B1E1C;
+    --panel:#0F2A27;
+    --line:#1E3F3A;
+    --signal:#3DDC97;
+    --signal-dim:#1F6E52;
+    --amber:#E8A248;
+    --text:#EAF3F0;
+    --text-dim:#8FADA7;
+    --danger:#E3574C;
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(1200px 600px at 50% -10%, #123531 0%, transparent 60%),
+      var(--bg);
+    color:var(--text);
+    font-family:'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height:100vh;
+    -webkit-font-smoothing:antialiased;
+    padding-bottom:40px;
+  }
+  @font-face{
+    font-family:'Space Grotesk';
+    src:local('Space Grotesk');
+  }
+  .wrap{max-width:480px;margin:0 auto;padding:24px 20px 8px;}
+
+  header{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
+  .bars{display:flex;align-items:flex-end;gap:3px;height:26px;}
+  .bars i{width:5px;background:var(--signal);border-radius:2px;display:block;animation:pulse 1.6s ease-in-out infinite;}
+  .bars i:nth-child(1){height:8px;animation-delay:0s;}
+  .bars i:nth-child(2){height:14px;animation-delay:.15s;}
+  .bars i:nth-child(3){height:20px;animation-delay:.3s;}
+  .bars i:nth-child(4){height:26px;animation-delay:.45s;}
+  @keyframes pulse{0%,100%{opacity:.35;}50%{opacity:1;}}
+  @media (prefers-reduced-motion: reduce){.bars i{animation:none;opacity:1;}}
+  .brand{line-height:1.1;}
+  .brand .eyebrow{font-size:11px;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase;}
+  .brand h1{font-size:19px;margin:2px 0 0;font-weight:600;letter-spacing:.01em;}
+
+  .steps{display:flex;gap:6px;margin-bottom:20px;}
+  .step-pill{flex:1;height:3px;border-radius:3px;background:var(--line);overflow:hidden;}
+  .step-pill.done{background:var(--signal);}
+
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    padding:20px;
+    margin-bottom:16px;
+  }
+  .card h2{
+    font-size:12px;letter-spacing:.12em;text-transform:uppercase;
+    color:var(--text-dim);margin:0 0 10px;font-weight:600;
+  }
+  .card p{margin:0 0 4px;font-size:15px;line-height:1.5;color:var(--text);}
+  .card p.dim{color:var(--text-dim);font-size:13.5px;}
+
+  .ssid-tag{
+    display:inline-flex;align-items:center;gap:8px;
+    background:#08201D;border:1px solid var(--signal-dim);
+    color:var(--signal);padding:8px 14px;border-radius:999px;
+    font-weight:600;font-size:14px;margin:10px 0 4px;
+  }
+  .ssid-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);}
+
+  button{
+    font-family:inherit;border:none;cursor:pointer;
+    border-radius:12px;font-weight:600;font-size:15.5px;
+    padding:15px 18px;width:100%;transition:transform .12s ease, opacity .12s ease;
+  }
+  button:active{transform:scale(.98);}
+  .btn-primary{background:var(--signal);color:#04231C;}
+  .btn-secondary{background:transparent;border:1px solid var(--line);color:var(--text);}
+  .btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+
+  #scanCard video{
+    width:100%;border-radius:10px;display:block;background:#000;
+    aspect-ratio:1/1;object-fit:cover;
+  }
+  .scan-frame{position:relative;}
+  .scan-frame .corner{
+    position:absolute;width:26px;height:26px;border-color:var(--signal);
+    pointer-events:none;
+  }
+  .corner.tl{top:10px;left:10px;border-top:3px solid var(--signal);border-left:3px solid var(--signal);border-radius:6px 0 0 0;}
+  .corner.tr{top:10px;right:10px;border-top:3px solid var(--signal);border-right:3px solid var(--signal);border-radius:0 6px 0 0;}
+  .corner.bl{bottom:10px;left:10px;border-bottom:3px solid var(--signal);border-left:3px solid var(--signal);border-radius:0 0 0 6px;}
+  .corner.br{bottom:10px;right:10px;border-bottom:3px solid var(--signal);border-right:3px solid var(--signal);border-radius:0 0 6px 0;}
+
+  .divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--text-dim);font-size:12px;letter-spacing:.08em;text-transform:uppercase;}
+  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
+
+  .code-input{
+    display:flex;gap:8px;margin-bottom:14px;
+  }
+  .code-input input{
+    flex:1;min-width:0;background:#08201D;border:1px solid var(--line);
+    color:var(--text);font-size:20px;letter-spacing:.12em;text-align:center;
+    border-radius:10px;padding:14px 6px;font-family:inherit;font-weight:600;
+  }
+  .code-input input:focus{outline:2px solid var(--signal);outline-offset:1px;}
+
+  .status{
+    display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim);
+    margin-top:10px;min-height:20px;
+  }
+  .status.err{color:var(--danger);}
+  .status.ok{color:var(--signal);}
+
+  footer{text-align:center;color:var(--text-dim);font-size:12px;padding:20px 0 4px;}
+  a.tel{color:var(--signal);text-decoration:none;}
+
+  .hint{
+    background:#1C1509;border:1px solid #4A3410;color:var(--amber);
+    border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:16px;
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <div class="brand">
+      <div class="eyebrow">Shaman Hotspot</div>
+      <h1>Connexion par ticket</h1>
+    </div>
+  </header>
+
+  <div class="steps" aria-hidden="true">
+    <div class="step-pill" id="pill1"></div>
+    <div class="step-pill" id="pill2"></div>
+  </div>
+
+  <!-- STEP 1 : join the wifi network -->
+  <div class="card" id="wifiCard">
+    <h2>Étape 1 · Rejoindre le réseau</h2>
+    <p>Ouvrez les réglages Wi-Fi de votre téléphone et connectez-vous à :</p>
+    <div class="ssid-tag"><span class="dot"></span><span id="ssidName">WI-FI 6 SHAMAN HOTSPOT</span></div>
+    <p class="dim" id="wifiHint">Réseau ouvert — aucun mot de passe requis pour rejoindre le Wi-Fi. Le code de votre ticket sert uniquement à activer votre accès internet, une fois connecté.</p>
+    <div style="height:14px"></div>
+    <button class="btn-primary" id="joinedBtn">Je suis connecté au Wi-Fi</button>
+  </div>
+
+  <!-- STEP 2 : scan or type ticket -->
+  <div class="card" id="scanCard" style="display:none;">
+    <h2>Étape 2 · Votre ticket</h2>
+    <p class="dim" style="margin-bottom:12px;">Scannez le QR code imprimé sur le ticket, ou saisissez le code à 5 chiffres.</p>
+
+    <div class="scan-frame">
+      <video id="video" playsinline muted></video>
+      <div class="corner tl"></div><div class="corner tr"></div>
+      <div class="corner bl"></div><div class="corner br"></div>
+    </div>
+    <canvas id="canvas" style="display:none;"></canvas>
+    <div style="height:12px"></div>
+    <button class="btn-secondary" id="camToggle">Activer la caméra</button>
+
+    <div class="divider">ou</div>
+
+    <div class="code-input">
+      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="codeInput" placeholder="Ex. 67758" autocomplete="off">
+    </div>
+    <button class="btn-primary" id="loginBtn">Se connecter</button>
+
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="hint" id="troubleshoot" style="display:none;">
+    Rien ne se passe après « Se connecter » ? Vérifiez que votre téléphone est bien
+    rattaché au réseau Wi-Fi ci-dessus (et non aux données mobiles), puis réessayez.
+  </div>
+
+  <footer>
+    Un souci de connexion&nbsp;? <a class="tel" href="tel:0748935686">07 48 93 56 86</a>
+  </footer>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
+<script>
+/* ====== CONFIGURATION — à adapter à votre installation ====== */
+const CONFIG = {
+  ssid: "WI-FI 6 SHAMAN HOTSPOT",     // nom exact du réseau à afficher
+  hotspotIp: "10.10.10.1",            // adresse du portail captif (vue dans le QR du ticket)
+  loginPath: "/login",                // chemin de connexion du portail
+};
+/* ============================================================= */
+
+document.getElementById('ssidName').textContent = CONFIG.ssid;
+
+const pill1 = document.getElementById('pill1');
+const pill2 = document.getElementById('pill2');
+const wifiCard = document.getElementById('wifiCard');
+const scanCard = document.getElementById('scanCard');
+const troubleshoot = document.getElementById('troubleshoot');
+const statusEl = document.getElementById('status');
+const codeInput = document.getElementById('codeInput');
+const loginBtn = document.getElementById('loginBtn');
+const camToggle = document.getElementById('camToggle');
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const ctx = canvas.getContext('2d');
+
+pill1.classList.add('done');
+
+document.getElementById('joinedBtn').addEventListener('click', () => {
+  wifiCard.style.display = 'none';
+  scanCard.style.display = 'block';
+  troubleshoot.style.display = 'block';
+  pill2.classList.add('done');
+  codeInput.focus();
+});
+
+function setStatus(msg, kind){
+  statusEl.textContent = msg;
+  statusEl.className = 'status' + (kind ? ' ' + kind : '');
+}
+
+// Extract a ticket code / credentials from whatever the QR code contains.
+// Handles: a full login URL like the one printed on the ticket
+// (http://10.10.10.1/login?username=67758&password=67758), or a bare
+// numeric code (5–8 digits) typed or scanned on its own.
+function parseTicketPayload(raw){
+  const text = (raw || '').trim();
+  try{
+    const url = new URL(text);
+    const u = url.searchParams.get('username');
+    const p = url.searchParams.get('password');
+    if(u) return { username: u, password: p || u };
+  }catch(e){ /* not a URL, fall through */ }
+
+  const digits = text.match(/\d{4,8}/);
+  if(digits) return { username: digits[0], password: digits[0] };
+  return null;
+}
+
+function buildLoginUrl({username, password}){
+  const u = new URL(`http://${CONFIG.hotspotIp}${CONFIG.loginPath}`);
+  u.searchParams.set('username', username);
+  u.searchParams.set('password', password);
+  return u.toString();
+}
+
+function goLogin(creds, sourceLabel){
+  const url = buildLoginUrl(creds);
+  setStatus(`Connexion avec le code ${creds.username}…`, 'ok');
+  // Top-level navigation (not fetch) — required because the app is served
+  // over HTTPS while the hotspot login is a plain HTTP address on the
+  // local network; browsers block that as a background request but allow
+  // a full page redirect.
+  window.location.href = url;
+}
+
+loginBtn.addEventListener('click', () => {
+  const raw = codeInput.value.trim();
+  if(!raw){ setStatus('Entrez le code inscrit sur votre ticket.', 'err'); return; }
+  const creds = parseTicketPayload(raw);
+  if(!creds){ setStatus('Code non reconnu — vérifiez les chiffres du ticket.', 'err'); return; }
+  goLogin(creds);
+});
+codeInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') loginBtn.click(); });
+
+// ---- Camera QR scanning ----
+let scanning = false;
+let stream = null;
+let rafId = null;
+
+async function startCamera(){
+  try{
+    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    video.srcObject = stream;
+    await video.play();
+    scanning = true;
+    camToggle.textContent = 'Arrêter la caméra';
+    setStatus('Visez le QR code du ticket…');
+    tick();
+  }catch(err){
+    setStatus("Caméra indisponible — utilisez la saisie manuelle ci-dessous.", 'err');
+  }
+}
+
+function stopCamera(){
+  scanning = false;
+  if(rafId) cancelAnimationFrame(rafId);
+  if(stream) stream.getTracks().forEach(t => t.stop());
+  camToggle.textContent = 'Activer la caméra';
+}
+
+camToggle.addEventListener('click', () => {
+  if(scanning){ stopCamera(); setStatus(''); }
+  else startCamera();
+});
+
+function tick(){
+  if(!scanning) return;
+  if(video.readyState === video.HAVE_ENOUGH_DATA){
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const code = window.jsQR ? jsQR(imageData.data, imageData.width, imageData.height) : null;
+    if(code && code.data){
+      const creds = parseTicketPayload(code.data);
+      if(creds){
+        stopCamera();
+        goLogin(creds);
+        return;
+      }
+    }
+  }
+  rafId = requestAnimationFrame(tick);
+}
+
+if('serviceWorker' in navigator){
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('sw.js').catch(() => {});
+  });
+}
+</script>
+</body>
+</html>

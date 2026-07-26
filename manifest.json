@@ -1,0 +1,14 @@
+{
+  "name": "Shaman Hotspot — Connexion ticket",
+  "short_name": "Shaman Hotspot",
+  "description": "Scannez votre ticket Wi-Fi et connectez-vous au hotspot en un geste.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0B1E1C",
+  "theme_color": "#0B1E1C",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
