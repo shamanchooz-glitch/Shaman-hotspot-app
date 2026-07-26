@@ -171,6 +171,7 @@
     <p class="dim" style="margin:8px 0 0;">Image floue ? Touchez l'écran de la caméra pour refaire la mise au point.</p>
     <div style="height:12px"></div>
     <button class="btn-secondary" id="camToggle">Activer la caméra</button>
+    <p class="dim" id="detectorBadge" style="margin:6px 0 0;font-size:12px;"></p>
 
     <div class="divider">ou</div>
 
@@ -325,6 +326,8 @@ async function startCamera(){
     videoTrack = stream.getVideoTracks()[0];
     await ensureContinuousFocus();
     await initDetector();
+    document.getElementById('detectorBadge').textContent =
+      useNativeDetector ? 'Lecteur : natif du téléphone' : 'Lecteur : secours (jsQR)';
 
     // jsQR (the fallback) loads from a CDN — if we'll need it, make sure
     // it's actually ready rather than scanning silently against nothing.
@@ -433,6 +436,7 @@ async function tick(){
           }catch(e){
             console.error('Détecteur natif indisponible, bascule sur le lecteur de secours:', e);
             useNativeDetector = false; // fall back to jsQR from the next frame on
+            document.getElementById('detectorBadge').textContent = 'Lecteur : secours (jsQR)';
           }
           detectBusy = false;
         }
