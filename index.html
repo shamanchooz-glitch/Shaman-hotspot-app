@@ -302,11 +302,37 @@ async function startCamera(){
     await ensureContinuousFocus();
     scanning = true;
     camToggle.textContent = 'Arrêter la caméra';
+
+    // jsQR loads from a CDN — on a slow or restrictive connection it can
+    // still be loading (or blocked) at this point. Scanning is useless
+    // without it, so check and say so plainly instead of scanning forever
+    // in silence.
+    if(typeof jsQR === 'undefined'){
+      setStatus('Chargement du lecteur de QR code…');
+      const ready = await waitForJsQR(5000);
+      if(!ready){
+        setStatus("Le lecteur de QR code n'a pas pu se charger (connexion internet faible ou bloquée). Utilisez la saisie manuelle ci-dessous.", 'err');
+        return;
+      }
+    }
+
     setStatus('Visez le QR code du ticket, à ~15 cm, bien éclairé.');
+    frameCount = 0;
     tick();
   }catch(err){
     setStatus("Caméra indisponible — utilisez la saisie manuelle ci-dessous.", 'err');
   }
+}
+
+function waitForJsQR(timeoutMs){
+  return new Promise((resolve) => {
+    const start = Date.now();
+    (function poll(){
+      if(typeof jsQR !== 'undefined') return resolve(true);
+      if(Date.now() - start > timeoutMs) return resolve(false);
+      setTimeout(poll, 150);
+    })();
+  });
 }
 
 // Explicitly (re)apply continuous autofocus if the device exposes that
@@ -347,22 +373,47 @@ camToggle.addEventListener('click', () => {
   else startCamera();
 });
 
+let frameCount = 0;
+const MAX_SCAN_DIM = 900; // downscale for speed & reliability across devices
+
 function tick(){
   if(!scanning) return;
-  if(video.readyState === video.HAVE_ENOUGH_DATA){
-    canvas.width = video.videoWidth;
-    canvas.height = video.videoHeight;
-    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-    const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = window.jsQR ? jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' }) : null;
-    if(code && code.data){
-      const creds = parseTicketPayload(code.data);
-      if(creds){
-        stopCamera();
-        goLogin(creds);
-        return;
+  try{
+    if(video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0){
+      // Downscale the frame before decoding: faster per-frame processing
+      // means more attempts per second, which matters more for detection
+      // than raw resolution once the QR is a reasonable size on screen.
+      const scale = Math.min(1, MAX_SCAN_DIM / Math.max(video.videoWidth, video.videoHeight));
+      const w = Math.round(video.videoWidth * scale);
+      const h = Math.round(video.videoHeight * scale);
+      canvas.width = w;
+      canvas.height = h;
+      ctx.drawImage(video, 0, 0, w, h);
+      const imageData = ctx.getImageData(0, 0, w, h);
+      const code = (typeof jsQR !== 'undefined')
+        ? jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' })
+        : null;
+
+      if(code && code.data){
+        const creds = parseTicketPayload(code.data);
+        if(creds){
+          stopCamera();
+          goLogin(creds);
+          return;
+        } else {
+          setStatus('QR code lu, mais le contenu ne ressemble pas à un ticket valide.', 'err');
+        }
+      } else {
+        frameCount++;
+        if(frameCount === 90){ // ~3s of attempts with no read
+          setStatus('Toujours en recherche… rapprochez le ticket pour que le QR remplisse bien le cadre.');
+        }
       }
     }
+  }catch(err){
+    // Never let a single bad frame kill the scan loop silently — log it
+    // and keep trying on the next frame.
+    console.error('Erreur de lecture QR:', err);
   }
   rafId = requestAnimationFrame(tick);
 }
