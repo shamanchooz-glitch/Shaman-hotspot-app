@@ -168,6 +168,7 @@
       <div class="corner bl"></div><div class="corner br"></div>
     </div>
     <canvas id="canvas" style="display:none;"></canvas>
+    <p class="dim" style="margin:8px 0 0;">Image floue ? Touchez l'écran de la caméra pour refaire la mise au point.</p>
     <div style="height:12px"></div>
     <button class="btn-secondary" id="camToggle">Activer la caméra</button>
 
@@ -280,19 +281,59 @@ let scanning = false;
 let stream = null;
 let rafId = null;
 
+let videoTrack = null;
+
 async function startCamera(){
   try{
-    stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: {
+        facingMode: { ideal: 'environment' },
+        width: { ideal: 1920 },
+        height: { ideal: 1920 },
+        // Some Android browsers default to a fixed, far-away focus on the
+        // web camera stream — this is the #1 cause of blurry scans up
+        // close. Ask explicitly for continuous autofocus where supported.
+        advanced: [{ focusMode: 'continuous' }]
+      }
+    });
     video.srcObject = stream;
     await video.play();
+    videoTrack = stream.getVideoTracks()[0];
+    await ensureContinuousFocus();
     scanning = true;
     camToggle.textContent = 'Arrêter la caméra';
-    setStatus('Visez le QR code du ticket…');
+    setStatus('Visez le QR code du ticket, à ~15 cm, bien éclairé.');
     tick();
   }catch(err){
     setStatus("Caméra indisponible — utilisez la saisie manuelle ci-dessous.", 'err');
   }
 }
+
+// Explicitly (re)apply continuous autofocus if the device exposes that
+// capability, and expose a manual "tap to refocus" fallback otherwise.
+async function ensureContinuousFocus(){
+  if(!videoTrack || !videoTrack.getCapabilities) return;
+  try{
+    const caps = videoTrack.getCapabilities();
+    if(caps.focusMode && caps.focusMode.includes('continuous')){
+      await videoTrack.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
+    }
+  }catch(e){ /* not supported on this device — tap-to-refocus below covers it */ }
+}
+
+// Tapping the video re-triggers focus: on devices without continuous
+// autofocus, briefly switching to single-shot focus and back nudges most
+// camera stacks into refocusing on what's currently in frame.
+video.addEventListener('click', async () => {
+  if(!videoTrack || !videoTrack.getCapabilities) return;
+  try{
+    const caps = videoTrack.getCapabilities();
+    if(caps.focusMode && caps.focusMode.includes('single-shot')){
+      await videoTrack.applyConstraints({ advanced: [{ focusMode: 'single-shot' }] });
+      setTimeout(ensureContinuousFocus, 400);
+    }
+  }catch(e){ /* ignore — no manual focus control on this device */ }
+});
 
 function stopCamera(){
   scanning = false;
@@ -313,7 +354,7 @@ function tick(){
     canvas.height = video.videoHeight;
     ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
     const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-    const code = window.jsQR ? jsQR(imageData.data, imageData.width, imageData.height) : null;
+    const code = window.jsQR ? jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' }) : null;
     if(code && code.data){
       const creds = parseTicketPayload(code.data);
       if(creds){
