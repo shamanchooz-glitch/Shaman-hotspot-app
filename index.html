@@ -280,8 +280,32 @@ codeInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') loginBtn.cl
 let scanning = false;
 let stream = null;
 let rafId = null;
-
 let videoTrack = null;
+
+// Most Android/Chrome phones expose a native, hardware-backed QR reader
+// (the Shape Detection API) — the same engine Chrome itself uses. It's
+// far more tolerant of small, tilted, or low-contrast printed codes than
+// a pure-JS reader like jsQR. We use it whenever it's available, and only
+// fall back to jsQR (needed on iOS/Safari, which doesn't implement it).
+let barcodeDetector = null;
+let useNativeDetector = false;
+let detectBusy = false;
+
+async function initDetector(){
+  useNativeDetector = false;
+  barcodeDetector = null;
+  if(!('BarcodeDetector' in window)) return;
+  try{
+    if('getSupportedFormats' in BarcodeDetector){
+      const formats = await BarcodeDetector.getSupportedFormats();
+      if(!formats.includes('qr_code')) return;
+    }
+    barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
+    useNativeDetector = true;
+  }catch(e){
+    useNativeDetector = false;
+  }
+}
 
 async function startCamera(){
   try{
@@ -300,14 +324,11 @@ async function startCamera(){
     await video.play();
     videoTrack = stream.getVideoTracks()[0];
     await ensureContinuousFocus();
-    scanning = true;
-    camToggle.textContent = 'Arrêter la caméra';
+    await initDetector();
 
-    // jsQR loads from a CDN — on a slow or restrictive connection it can
-    // still be loading (or blocked) at this point. Scanning is useless
-    // without it, so check and say so plainly instead of scanning forever
-    // in silence.
-    if(typeof jsQR === 'undefined'){
+    // jsQR (the fallback) loads from a CDN — if we'll need it, make sure
+    // it's actually ready rather than scanning silently against nothing.
+    if(!useNativeDetector && typeof jsQR === 'undefined'){
       setStatus('Chargement du lecteur de QR code…');
       const ready = await waitForJsQR(5000);
       if(!ready){
@@ -316,6 +337,8 @@ async function startCamera(){
       }
     }
 
+    scanning = true;
+    camToggle.textContent = 'Arrêter la caméra';
     setStatus('Visez le QR code du ticket, à ~15 cm, bien éclairé.');
     frameCount = 0;
     tick();
@@ -374,39 +397,65 @@ camToggle.addEventListener('click', () => {
 });
 
 let frameCount = 0;
-const MAX_SCAN_DIM = 900; // downscale for speed & reliability across devices
+const MAX_SCAN_DIM = 900; // downscale for speed & reliability, jsQR path only
 
-function tick(){
+function handleDecoded(rawValue){
+  const creds = parseTicketPayload(rawValue);
+  if(creds){
+    stopCamera();
+    goLogin(creds);
+    return true;
+  }
+  setStatus('QR code lu, mais le contenu ne ressemble pas à un ticket valide.', 'err');
+  return false;
+}
+
+async function tick(){
   if(!scanning) return;
   try{
     if(video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0){
-      // Downscale the frame before decoding: faster per-frame processing
-      // means more attempts per second, which matters more for detection
-      // than raw resolution once the QR is a reasonable size on screen.
-      const scale = Math.min(1, MAX_SCAN_DIM / Math.max(video.videoWidth, video.videoHeight));
-      const w = Math.round(video.videoWidth * scale);
-      const h = Math.round(video.videoHeight * scale);
-      canvas.width = w;
-      canvas.height = h;
-      ctx.drawImage(video, 0, 0, w, h);
-      const imageData = ctx.getImageData(0, 0, w, h);
-      const code = (typeof jsQR !== 'undefined')
-        ? jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' })
-        : null;
 
-      if(code && code.data){
-        const creds = parseTicketPayload(code.data);
-        if(creds){
-          stopCamera();
-          goLogin(creds);
-          return;
-        } else {
-          setStatus('QR code lu, mais le contenu ne ressemble pas à un ticket valide.', 'err');
+      if(useNativeDetector && barcodeDetector){
+        // Native path: feed the live video frame directly to the OS
+        // decoder — no manual downscaling needed, it reads full quality.
+        if(!detectBusy){
+          detectBusy = true;
+          try{
+            const codes = await barcodeDetector.detect(video);
+            if(codes && codes.length){
+              if(handleDecoded(codes[0].rawValue)){ detectBusy = false; return; }
+            } else {
+              frameCount++;
+              if(frameCount === 90){
+                setStatus('Toujours en recherche… rapprochez le ticket pour que le QR remplisse bien le cadre.');
+              }
+            }
+          }catch(e){
+            console.error('Détecteur natif indisponible, bascule sur le lecteur de secours:', e);
+            useNativeDetector = false; // fall back to jsQR from the next frame on
+          }
+          detectBusy = false;
         }
       } else {
-        frameCount++;
-        if(frameCount === 90){ // ~3s of attempts with no read
-          setStatus('Toujours en recherche… rapprochez le ticket pour que le QR remplisse bien le cadre.');
+        // Fallback path: draw to a canvas and decode with jsQR.
+        const scale = Math.min(1, MAX_SCAN_DIM / Math.max(video.videoWidth, video.videoHeight));
+        const w = Math.round(video.videoWidth * scale);
+        const h = Math.round(video.videoHeight * scale);
+        canvas.width = w;
+        canvas.height = h;
+        ctx.drawImage(video, 0, 0, w, h);
+        const imageData = ctx.getImageData(0, 0, w, h);
+        const code = (typeof jsQR !== 'undefined')
+          ? jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' })
+          : null;
+
+        if(code && code.data){
+          if(handleDecoded(code.data)) return;
+        } else {
+          frameCount++;
+          if(frameCount === 90){
+            setStatus('Toujours en recherche… rapprochez le ticket pour que le QR remplisse bien le cadre.');
+          }
         }
       }
     }
