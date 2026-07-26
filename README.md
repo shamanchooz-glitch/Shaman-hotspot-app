@@ -81,3 +81,19 @@ iOS et Android ; aucune app, même professionnelle, ne peut aller plus
 loin sans être une app native avec des droits systèmes spéciaux
 (et même dans ce cas, le client doit valider une fenêtre native de
 confirmation — jamais une connexion 100% invisible).
+
+## Fonctionnement hors connexion internet
+
+L'app s'ouvre et fonctionne désormais **sans connexion internet**, y compris
+son scanner de QR code — une fois qu'elle a été ouverte au moins une fois
+avec internet (ce qui est de toute façon nécessaire pour l'installer sur
+l'écran d'accueil). À cette première ouverture, un service worker met en
+cache tout ce dont l'app a besoin (l'interface, et la bibliothèque de
+secours pour la lecture de QR code). Ensuite, même sans aucun réseau actif,
+le client peut ouvrir l'app installée, scanner son ticket, puis rejoindre
+le Wi-Fi et se connecter normalement.
+
+Ce détail ne change pas : le téléphone doit quand même rejoindre le réseau
+Wi-Fi du hotspot à un moment donné pour que la connexion finale
+(l'étape 2) aboutisse — mais l'app elle-même n'a plus besoin d'internet
+pour s'ouvrir, afficher ses instructions, ou faire fonctionner la caméra.

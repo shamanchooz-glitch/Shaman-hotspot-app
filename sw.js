@@ -1,8 +1,16 @@
-const CACHE = 'shaman-hotspot-v2';
+const CACHE = 'shaman-hotspot-v3';
 // Only static, rarely-changed assets are cache-first. The HTML shell is
 // deliberately NOT pre-cached here — see the fetch handler below — so
 // that updates to index.html are never masked by a stale cache again.
-const ASSETS = ['./manifest.json', './icon.svg'];
+// jsQR is cached here too: it's the offline QR-scanning fallback for
+// phones without a native barcode detector, and it's only ever reachable
+// from a CDN — so the very first (online) open must capture it, or
+// scanning would silently break the moment the phone has no signal.
+const ASSETS = [
+  './manifest.json',
+  './icon.svg',
+  'https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js',
+];
 
 self.addEventListener('install', (e) => {
   e.waitUntil(caches.open(CACHE).then((c) => c.addAll(ASSETS)));
@@ -41,8 +49,18 @@ self.addEventListener('fetch', (e) => {
     return;
   }
 
-  // Cache-first for static assets (icon, manifest).
+  // Cache-first for static assets (icon, manifest, jsQR). Anything fetched
+  // successfully here also gets cached on the fly, so the app keeps working
+  // offline even for a resource that wasn't in the initial precache list.
   e.respondWith(
-    caches.match(e.request).then((cached) => cached || fetch(e.request))
+    caches.match(e.request).then((cached) => {
+      if (cached) return cached;
+      return fetch(e.request).then((res) => {
+        if (res && res.ok) {
+          caches.open(CACHE).then((c) => c.put(e.request, res.clone()));
+        }
+        return res;
+      });
+    })
   );
 });
