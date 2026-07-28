@@ -3,473 +3,1106 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Shaman Hotspot — Connexion ticket</title>
-<meta name="theme-color" content="#0B1E1C">
+<title>SHAMAN PRODUCTION — Envoi SMS, E-mail & Médias</title>
+<meta name="theme-color" content="#D3EAF7">
 <link rel="manifest" href="manifest.json">
 <link rel="icon" href="icon.png" type="image/png">
 <link rel="apple-touch-icon" href="icon.png">
 <style>
   :root{
-    --bg:#0B1E1C;
-    --panel:#0F2A27;
-    --line:#1E3F3A;
-    --signal:#3DDC97;
-    --signal-dim:#1F6E52;
-    --amber:#E8A248;
-    --text:#EAF3F0;
-    --text-dim:#8FADA7;
-    --danger:#E3574C;
+    --bg:#D3EAF7; --panel:#F3FAFF; --line:#B8DCEC;
+    --signal:#F0528C; --signal-dim:#FAC3D9; --sky:#2496C7; --sky-dim:#CBE9F5;
+    --amber:#F0603D;
+    --text:#0F2436; --text-dim:#43647F; --danger:#C93C52;
     --radius:14px;
   }
   *{box-sizing:border-box;}
   html,body{margin:0;padding:0;}
   body{
-    background:
-      radial-gradient(1200px 600px at 50% -10%, #123531 0%, transparent 60%),
-      var(--bg);
-    color:var(--text);
-    font-family:'Space Grotesk', 'Segoe UI', system-ui, -apple-system, sans-serif;
-    min-height:100vh;
-    -webkit-font-smoothing:antialiased;
-    padding-bottom:40px;
+    background: radial-gradient(1100px 560px at 15% -10%, #F6C7DC 0%, transparent 55%),
+                radial-gradient(1100px 560px at 100% 0%, #B9E1F2 0%, transparent 55%),
+                var(--bg);
+    color:var(--text); font-family:'Segoe UI', system-ui, -apple-system, sans-serif;
+    min-height:100vh; -webkit-font-smoothing:antialiased; padding-bottom:90px;
   }
-  @font-face{
-    font-family:'Space Grotesk';
-    src:local('Space Grotesk');
-  }
-  .wrap{max-width:480px;margin:0 auto;padding:24px 20px 8px;}
+  .wrap{max-width:560px;margin:0 auto;padding:20px 16px 8px;}
 
-  header{display:flex;align-items:center;gap:12px;margin-bottom:22px;}
-  .bars{display:flex;align-items:flex-end;gap:3px;height:26px;}
-  .bars i{width:5px;background:var(--signal);border-radius:2px;display:block;animation:pulse 1.6s ease-in-out infinite;}
-  .bars i:nth-child(1){height:8px;animation-delay:0s;}
-  .bars i:nth-child(2){height:14px;animation-delay:.15s;}
-  .bars i:nth-child(3){height:20px;animation-delay:.3s;}
-  .bars i:nth-child(4){height:26px;animation-delay:.45s;}
-  @keyframes pulse{0%,100%{opacity:.35;}50%{opacity:1;}}
-  @media (prefers-reduced-motion: reduce){.bars i{animation:none;opacity:1;}}
-  .brand{line-height:1.1;}
-  .brand .eyebrow{font-size:11px;letter-spacing:.14em;color:var(--text-dim);text-transform:uppercase;}
-  .brand h1{font-size:19px;margin:2px 0 0;font-weight:600;letter-spacing:.01em;}
-
-  .steps{display:flex;gap:6px;margin-bottom:20px;}
-  .step-pill{flex:1;height:3px;border-radius:3px;background:var(--line);overflow:hidden;}
-  .step-pill.done{background:var(--signal);}
-
-  .card{
-    background:var(--panel);
-    border:1px solid var(--line);
-    border-radius:var(--radius);
-    padding:20px;
-    margin-bottom:16px;
+  header{display:flex;align-items:center;gap:14px;margin-bottom:18px;}
+  .avatar{
+    width:56px;height:56px;border-radius:50%;object-fit:cover;
+    border:2px solid var(--signal); cursor:pointer; flex-shrink:0;
+    box-shadow:0 2px 10px rgba(255,111,160,.35);
   }
-  .card h2{
-    font-size:12px;letter-spacing:.12em;text-transform:uppercase;
-    color:var(--text-dim);margin:0 0 10px;font-weight:600;
-  }
-  .card p{margin:0 0 4px;font-size:15px;line-height:1.5;color:var(--text);}
-  .card p.dim{color:var(--text-dim);font-size:13.5px;}
+  .brand{line-height:1.15;}
+  .brand .eyebrow{font-size:10.5px;letter-spacing:.12em;color:var(--sky);text-transform:uppercase;font-weight:700;}
+  .brand h1{font-size:17px;margin:2px 0 0;font-weight:700;letter-spacing:.01em;color:var(--text);}
 
-  .ssid-tag{
-    display:inline-flex;align-items:center;gap:8px;
-    background:#08201D;border:1px solid var(--signal-dim);
-    color:var(--signal);padding:8px 14px;border-radius:999px;
-    font-weight:600;font-size:14px;margin:10px 0 4px;
+  #fullscreenOverlay{
+    display:none; position:fixed; inset:0; background:rgba(10,20,40,.92);
+    z-index:999; align-items:center; justify-content:center; cursor:pointer;
   }
-  .ssid-tag .dot{width:7px;height:7px;border-radius:50%;background:var(--signal);}
+  #fullscreenOverlay img{max-width:88vw;max-height:88vh;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,.5);}
 
-  button{
-    font-family:inherit;border:none;cursor:pointer;
-    border-radius:12px;font-weight:600;font-size:15.5px;
-    padding:15px 18px;width:100%;transition:transform .12s ease, opacity .12s ease;
+  nav.tabs{
+    display:flex; gap:6px; background:var(--panel); border:1px solid var(--line);
+    border-radius:12px; padding:5px; margin-bottom:18px; overflow-x:auto;
+    box-shadow:0 2px 12px rgba(63,182,234,.08);
   }
-  button:active{transform:scale(.98);}
-  .btn-primary{background:var(--signal);color:#04231C;}
-  .btn-secondary{background:transparent;border:1px solid var(--line);color:var(--text);}
-  .btn-primary:disabled{opacity:.45;cursor:not-allowed;}
+  nav.tabs button{
+    flex:1; white-space:nowrap; background:transparent; border:none; color:var(--text-dim);
+    font-weight:600; font-size:13px; padding:10px 8px; border-radius:9px; cursor:pointer;
+  }
+  nav.tabs button.active{background:linear-gradient(135deg, var(--signal), var(--sky)); color:#FFFFFF;}
 
-  #scanCard video{
-    width:100%;border-radius:10px;display:block;background:#000;
-    aspect-ratio:1/1;object-fit:cover;
-  }
-  .scan-frame{position:relative;}
-  .scan-frame .corner{
-    position:absolute;width:26px;height:26px;border-color:var(--signal);
-    pointer-events:none;
-  }
-  .corner.tl{top:10px;left:10px;border-top:3px solid var(--signal);border-left:3px solid var(--signal);border-radius:6px 0 0 0;}
-  .corner.tr{top:10px;right:10px;border-top:3px solid var(--signal);border-right:3px solid var(--signal);border-radius:0 6px 0 0;}
-  .corner.bl{bottom:10px;left:10px;border-bottom:3px solid var(--signal);border-left:3px solid var(--signal);border-radius:0 0 0 6px;}
-  .corner.br{bottom:10px;right:10px;border-bottom:3px solid var(--signal);border-right:3px solid var(--signal);border-radius:0 0 6px 0;}
+  .card{background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); padding:18px; margin-bottom:14px;
+    box-shadow:0 2px 14px rgba(63,182,234,.07);}
+  .card h2{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--sky);margin:0 0 12px;font-weight:700;}
+  .card p.dim{color:var(--text-dim);font-size:13.5px;line-height:1.5;margin:0 0 10px;}
 
-  .divider{display:flex;align-items:center;gap:10px;margin:16px 0;color:var(--text-dim);font-size:12px;letter-spacing:.08em;text-transform:uppercase;}
-  .divider::before,.divider::after{content:"";flex:1;height:1px;background:var(--line);}
-
-  .code-input{
-    display:flex;gap:8px;margin-bottom:14px;
+  label{display:block;font-size:12.5px;color:var(--text-dim);margin:10px 0 5px;font-weight:600;}
+  input[type=text], input[type=tel], input[type=email], textarea, select, input[type=number]{
+    width:100%; background:#E8F4FA; border:1px solid var(--line); color:var(--text);
+    font-size:15px; border-radius:10px; padding:11px 12px; font-family:inherit;
   }
-  .code-input input{
-    flex:1;min-width:0;background:#08201D;border:1px solid var(--line);
-    color:var(--text);font-size:20px;letter-spacing:.12em;text-align:center;
-    border-radius:10px;padding:14px 6px;font-family:inherit;font-weight:600;
-  }
-  .code-input input:focus{outline:2px solid var(--signal);outline-offset:1px;}
+  input:focus, textarea:focus, select:focus{outline:2px solid var(--signal); outline-offset:1px;}
+  textarea{resize:vertical; min-height:110px;}
 
-  .status{
-    display:flex;align-items:center;gap:10px;font-size:14px;color:var(--text-dim);
-    margin-top:10px;min-height:20px;
+  button.btn{
+    font-family:inherit; border:none; cursor:pointer; border-radius:11px; font-weight:700;
+    font-size:14.5px; padding:13px 16px; transition:transform .1s ease;
   }
-  .status.err{color:var(--danger);}
-  .status.ok{color:var(--signal);}
+  button.btn:active{transform:scale(.98);}
+  .btn-primary{background:linear-gradient(135deg, var(--signal), #FF9BC0); color:#FFFFFF; width:100%;
+    box-shadow:0 4px 14px rgba(255,111,160,.35);}
+  .btn-secondary{background:var(--sky-dim);border:1px solid var(--line);color:var(--sky);}
+  .btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+  .btn-small{padding:8px 12px;font-size:13px;border-radius:9px;}
+  .row{display:flex;gap:8px;}
+  .row > *{flex:1;}
 
-  footer{text-align:center;color:var(--text-dim);font-size:12px;padding:20px 0 4px;}
-  a.tel{color:var(--signal);text-decoration:none;}
+  .hint{background:var(--sky-dim);border:1px solid #BEE6F7;color:#0E6E96;border-radius:10px;padding:11px 13px;font-size:12.5px;line-height:1.5;margin-bottom:14px;}
 
-  .hint{
-    background:#1C1509;border:1px solid #4A3410;color:var(--amber);
-    border-radius:10px;padding:12px 14px;font-size:13px;line-height:1.5;margin-bottom:16px;
+  .list-item{
+    display:flex;align-items:center;justify-content:space-between;gap:10px;
+    padding:10px 0;border-bottom:1px solid var(--line);
   }
+  .list-item:last-child{border-bottom:none;}
+  .list-item .info{min-width:0;}
+  .list-item .info .name{font-weight:600;font-size:14.5px;color:var(--text);}
+  .list-item .info .meta{font-size:12.5px;color:var(--text-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .chip{display:inline-block;background:var(--signal-dim);border:1px solid #FFC2D9;color:#C43E71;
+    font-size:11px;font-weight:700;padding:3px 9px;border-radius:999px;margin:2px 4px 2px 0;}
+
+  .check-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line);}
+  .check-row:last-child{border-bottom:none;}
+  .check-row input[type=checkbox]{width:18px;height:18px;flex-shrink:0;accent-color:var(--signal);}
+  .check-row label{margin:0;color:var(--text);font-weight:500;font-size:14.5px;flex:1;}
+
+  .counter{font-size:12px;color:var(--text-dim);text-align:right;margin-top:4px;}
+  .counter.warn{color:var(--amber);}
+
+  .batch{border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:10px;background:var(--sky-dim);}
+  .batch .batch-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;}
+  .batch .batch-head .label{font-weight:700;font-size:13.5px;color:var(--text);}
+  .batch .batch-head .count{font-size:12px;color:var(--text-dim);}
+  .batch.done{opacity:.55;}
+  .batch .sent-badge{color:#C43E71;font-size:12.5px;font-weight:700;}
+
+  .media-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0;}
+  .media-thumb{position:relative;border-radius:10px;overflow:hidden;aspect-ratio:1/1;background:var(--sky-dim);border:1px solid var(--line);}
+  .media-thumb img, .media-thumb video{width:100%;height:100%;object-fit:cover;}
+  .media-thumb .rm{position:absolute;top:4px;right:4px;background:rgba(20,30,50,.6);color:#fff;border:none;
+    border-radius:50%;width:22px;height:22px;font-size:13px;cursor:pointer;line-height:1;}
+
+  .empty{color:var(--text-dim);font-size:13.5px;text-align:center;padding:16px 0;}
+
+  .tabpanel{display:none;}
+  .tabpanel.active{display:block;}
+
+  footer{text-align:center;color:var(--text-dim);font-size:11.5px;padding:18px 0 4px;}
 </style>
 </head>
 <body>
-<div class="wrap">
 
+<div id="fullscreenOverlay"><img id="fullscreenImg" src="avatar.png" alt=""></div>
+
+<div class="wrap">
   <header>
-    <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <img class="avatar" id="avatarBtn" src="avatar.png" alt="Photo de profil">
     <div class="brand">
-      <div class="eyebrow">Shaman Hotspot</div>
-      <h1>Connexion par ticket</h1>
+      <div class="eyebrow">Shaman Production</div>
+      <h1>Envoi SMS, E-mail, Médias</h1>
     </div>
   </header>
 
-  <div class="steps" aria-hidden="true">
-    <div class="step-pill" id="pill1"></div>
-    <div class="step-pill" id="pill2"></div>
-  </div>
+  <nav class="tabs">
+    <button class="tab-btn active" data-tab="contacts">Contacts</button>
+    <button class="tab-btn" data-tab="sms">SMS</button>
+    <button class="tab-btn" data-tab="email">E-mail</button>
+    <button class="tab-btn" data-tab="media">Médias · WhatsApp</button>
+    <button class="tab-btn" data-tab="scheduled">Programmés</button>
+  </nav>
 
-  <!-- STEP 1 : join the wifi network -->
-  <div class="card" id="wifiCard">
-    <h2>Étape 1 · Rejoindre le réseau</h2>
-    <p>Ouvrez les réglages Wi-Fi de votre téléphone et connectez-vous à :</p>
-    <div class="ssid-tag"><span class="dot"></span><span id="ssidName">WI-FI 6 SHAMAN HOTSPOT</span></div>
-    <p class="dim" id="wifiHint">Réseau ouvert — aucun mot de passe requis pour rejoindre le Wi-Fi. Le code de votre ticket sert uniquement à activer votre accès internet, une fois connecté.</p>
-    <div style="height:14px"></div>
-    <button class="btn-primary" id="joinedBtn">Je suis connecté au Wi-Fi</button>
-  </div>
-
-  <!-- STEP 2 : scan or type ticket -->
-  <div class="card" id="scanCard" style="display:none;">
-    <h2>Étape 2 · Votre ticket</h2>
-    <p class="dim" style="margin-bottom:12px;">Scannez le QR code imprimé sur le ticket, ou saisissez le code à 5 chiffres.</p>
-
-    <div class="scan-frame">
-      <video id="video" playsinline muted></video>
-      <div class="corner tl"></div><div class="corner tr"></div>
-      <div class="corner bl"></div><div class="corner br"></div>
+  <!-- ===================== CONTACTS ===================== -->
+  <div class="tabpanel active" id="tab-contacts">
+    <div class="card">
+      <h2>Appeler un numéro</h2>
+      <div class="row">
+        <input type="tel" id="quickCallNumber" placeholder="Ex. +2250748935686">
+        <a class="btn btn-primary" id="quickCallBtn" style="flex:0 0 auto;text-decoration:none;text-align:center;" href="tel:">📞 Appeler</a>
+      </div>
     </div>
-    <canvas id="canvas" style="display:none;"></canvas>
-    <p class="dim" style="margin:8px 0 0;">Image floue ? Touchez l'écran de la caméra pour refaire la mise au point.</p>
-    <div style="height:12px"></div>
-    <button class="btn-secondary" id="camToggle">Activer la caméra</button>
-    <p class="dim" id="detectorBadge" style="margin:6px 0 0;font-size:12px;"></p>
 
-    <div class="divider">ou</div>
-
-    <div class="code-input">
-      <input type="text" inputmode="numeric" pattern="[0-9]*" maxlength="8" id="codeInput" placeholder="Ex. 67758" autocomplete="off">
+    <div class="card">
+      <h2>Ajouter un contact</h2>
+      <label>Nom</label>
+      <input type="text" id="cName" placeholder="Ex. Koffi Jean">
+      <label>Téléphone</label>
+      <div class="row">
+        <select id="cCountry" style="flex:0 0 44%;">
+      <option value="225">Côte d&#39;Ivoire (+225)</option>
+      <option value="93">Afghanistan (+93)</option>
+      <option value="27">Afrique du Sud (+27)</option>
+      <option value="355">Albanie (+355)</option>
+      <option value="213">Algérie (+213)</option>
+      <option value="49">Allemagne (+49)</option>
+      <option value="376">Andorre (+376)</option>
+      <option value="244">Angola (+244)</option>
+      <option value="1268">Antigua-et-Barbuda (+1268)</option>
+      <option value="966">Arabie saoudite (+966)</option>
+      <option value="54">Argentine (+54)</option>
+      <option value="374">Arménie (+374)</option>
+      <option value="61">Australie (+61)</option>
+      <option value="43">Autriche (+43)</option>
+      <option value="994">Azerbaïdjan (+994)</option>
+      <option value="1242">Bahamas (+1242)</option>
+      <option value="973">Bahreïn (+973)</option>
+      <option value="880">Bangladesh (+880)</option>
+      <option value="1246">Barbade (+1246)</option>
+      <option value="32">Belgique (+32)</option>
+      <option value="501">Belize (+501)</option>
+      <option value="975">Bhoutan (+975)</option>
+      <option value="95">Birmanie (Myanmar) (+95)</option>
+      <option value="375">Biélorussie (+375)</option>
+      <option value="591">Bolivie (+591)</option>
+      <option value="387">Bosnie-Herzégovine (+387)</option>
+      <option value="267">Botswana (+267)</option>
+      <option value="673">Brunei (+673)</option>
+      <option value="55">Brésil (+55)</option>
+      <option value="359">Bulgarie (+359)</option>
+      <option value="226">Burkina Faso (+226)</option>
+      <option value="257">Burundi (+257)</option>
+      <option value="229">Bénin (+229)</option>
+      <option value="855">Cambodge (+855)</option>
+      <option value="237">Cameroun (+237)</option>
+      <option value="1">Canada (+1)</option>
+      <option value="238">Cap-Vert (+238)</option>
+      <option value="236">Centrafrique (+236)</option>
+      <option value="56">Chili (+56)</option>
+      <option value="86">Chine (+86)</option>
+      <option value="357">Chypre (+357)</option>
+      <option value="57">Colombie (+57)</option>
+      <option value="269">Comores (+269)</option>
+      <option value="242">Congo-Brazzaville (+242)</option>
+      <option value="243">Congo-Kinshasa (RDC) (+243)</option>
+      <option value="850">Corée du Nord (+850)</option>
+      <option value="82">Corée du Sud (+82)</option>
+      <option value="506">Costa Rica (+506)</option>
+      <option value="385">Croatie (+385)</option>
+      <option value="53">Cuba (+53)</option>
+      <option value="45">Danemark (+45)</option>
+      <option value="253">Djibouti (+253)</option>
+      <option value="1767">Dominique (+1767)</option>
+      <option value="34">Espagne (+34)</option>
+      <option value="372">Estonie (+372)</option>
+      <option value="268">Eswatini (+268)</option>
+      <option value="679">Fidji (+679)</option>
+      <option value="358">Finlande (+358)</option>
+      <option value="33">France (+33)</option>
+      <option value="241">Gabon (+241)</option>
+      <option value="220">Gambie (+220)</option>
+      <option value="233">Ghana (+233)</option>
+      <option value="1473">Grenade (+1473)</option>
+      <option value="30">Grèce (+30)</option>
+      <option value="502">Guatemala (+502)</option>
+      <option value="224">Guinée (+224)</option>
+      <option value="240">Guinée équatoriale (+240)</option>
+      <option value="245">Guinée-Bissau (+245)</option>
+      <option value="592">Guyana (+592)</option>
+      <option value="995">Géorgie (+995)</option>
+      <option value="509">Haïti (+509)</option>
+      <option value="504">Honduras (+504)</option>
+      <option value="36">Hongrie (+36)</option>
+      <option value="91">Inde (+91)</option>
+      <option value="62">Indonésie (+62)</option>
+      <option value="964">Irak (+964)</option>
+      <option value="98">Iran (+98)</option>
+      <option value="353">Irlande (+353)</option>
+      <option value="354">Islande (+354)</option>
+      <option value="972">Israël (+972)</option>
+      <option value="39">Italie (+39)</option>
+      <option value="1876">Jamaïque (+1876)</option>
+      <option value="81">Japon (+81)</option>
+      <option value="962">Jordanie (+962)</option>
+      <option value="7">Kazakhstan (+7)</option>
+      <option value="254">Kenya (+254)</option>
+      <option value="996">Kirghizistan (+996)</option>
+      <option value="686">Kiribati (+686)</option>
+      <option value="965">Koweït (+965)</option>
+      <option value="856">Laos (+856)</option>
+      <option value="266">Lesotho (+266)</option>
+      <option value="371">Lettonie (+371)</option>
+      <option value="961">Liban (+961)</option>
+      <option value="231">Liberia (+231)</option>
+      <option value="218">Libye (+218)</option>
+      <option value="423">Liechtenstein (+423)</option>
+      <option value="370">Lituanie (+370)</option>
+      <option value="352">Luxembourg (+352)</option>
+      <option value="389">Macédoine du Nord (+389)</option>
+      <option value="261">Madagascar (+261)</option>
+      <option value="60">Malaisie (+60)</option>
+      <option value="265">Malawi (+265)</option>
+      <option value="960">Maldives (+960)</option>
+      <option value="223">Mali (+223)</option>
+      <option value="356">Malte (+356)</option>
+      <option value="212">Maroc (+212)</option>
+      <option value="230">Maurice (+230)</option>
+      <option value="222">Mauritanie (+222)</option>
+      <option value="52">Mexique (+52)</option>
+      <option value="691">Micronésie (+691)</option>
+      <option value="373">Moldavie (+373)</option>
+      <option value="377">Monaco (+377)</option>
+      <option value="976">Mongolie (+976)</option>
+      <option value="382">Monténégro (+382)</option>
+      <option value="258">Mozambique (+258)</option>
+      <option value="264">Namibie (+264)</option>
+      <option value="674">Nauru (+674)</option>
+      <option value="505">Nicaragua (+505)</option>
+      <option value="227">Niger (+227)</option>
+      <option value="234">Nigeria (+234)</option>
+      <option value="47">Norvège (+47)</option>
+      <option value="64">Nouvelle-Zélande (+64)</option>
+      <option value="977">Népal (+977)</option>
+      <option value="968">Oman (+968)</option>
+      <option value="256">Ouganda (+256)</option>
+      <option value="998">Ouzbékistan (+998)</option>
+      <option value="92">Pakistan (+92)</option>
+      <option value="680">Palaos (+680)</option>
+      <option value="970">Palestine (+970)</option>
+      <option value="507">Panama (+507)</option>
+      <option value="675">Papouasie-Nouvelle-Guinée (+675)</option>
+      <option value="595">Paraguay (+595)</option>
+      <option value="31">Pays-Bas (+31)</option>
+      <option value="63">Philippines (+63)</option>
+      <option value="48">Pologne (+48)</option>
+      <option value="351">Portugal (+351)</option>
+      <option value="51">Pérou (+51)</option>
+      <option value="974">Qatar (+974)</option>
+      <option value="40">Roumanie (+40)</option>
+      <option value="44">Royaume-Uni (+44)</option>
+      <option value="7">Russie (+7)</option>
+      <option value="250">Rwanda (+250)</option>
+      <option value="1809">République dominicaine (+1809)</option>
+      <option value="420">République tchèque (+420)</option>
+      <option value="1869">Saint-Kitts-et-Nevis (+1869)</option>
+      <option value="378">Saint-Marin (+378)</option>
+      <option value="1784">Saint-Vincent-et-les-Grenadines (+1784)</option>
+      <option value="1758">Sainte-Lucie (+1758)</option>
+      <option value="677">Salomon (+677)</option>
+      <option value="503">Salvador (+503)</option>
+      <option value="685">Samoa (+685)</option>
+      <option value="239">Sao Tomé-et-Principe (+239)</option>
+      <option value="381">Serbie (+381)</option>
+      <option value="248">Seychelles (+248)</option>
+      <option value="232">Sierra Leone (+232)</option>
+      <option value="65">Singapour (+65)</option>
+      <option value="421">Slovaquie (+421)</option>
+      <option value="386">Slovénie (+386)</option>
+      <option value="252">Somalie (+252)</option>
+      <option value="249">Soudan (+249)</option>
+      <option value="211">Soudan du Sud (+211)</option>
+      <option value="94">Sri Lanka (+94)</option>
+      <option value="41">Suisse (+41)</option>
+      <option value="597">Suriname (+597)</option>
+      <option value="46">Suède (+46)</option>
+      <option value="963">Syrie (+963)</option>
+      <option value="221">Sénégal (+221)</option>
+      <option value="992">Tadjikistan (+992)</option>
+      <option value="255">Tanzanie (+255)</option>
+      <option value="235">Tchad (+235)</option>
+      <option value="66">Thaïlande (+66)</option>
+      <option value="670">Timor oriental (+670)</option>
+      <option value="228">Togo (+228)</option>
+      <option value="676">Tonga (+676)</option>
+      <option value="1868">Trinité-et-Tobago (+1868)</option>
+      <option value="216">Tunisie (+216)</option>
+      <option value="993">Turkménistan (+993)</option>
+      <option value="90">Turquie (+90)</option>
+      <option value="688">Tuvalu (+688)</option>
+      <option value="380">Ukraine (+380)</option>
+      <option value="598">Uruguay (+598)</option>
+      <option value="678">Vanuatu (+678)</option>
+      <option value="379">Vatican (+379)</option>
+      <option value="58">Venezuela (+58)</option>
+      <option value="84">Vietnam (+84)</option>
+      <option value="967">Yémen (+967)</option>
+      <option value="260">Zambie (+260)</option>
+      <option value="263">Zimbabwe (+263)</option>
+      <option value="20">Égypte (+20)</option>
+      <option value="971">Émirats arabes unis (+971)</option>
+      <option value="593">Équateur (+593)</option>
+      <option value="291">Érythrée (+291)</option>
+      <option value="1">États-Unis (+1)</option>
+      <option value="251">Éthiopie (+251)</option>
+      <option value="692">Îles Marshall (+692)</option>
+        </select>
+        <input type="tel" id="cPhone" placeholder="Ex. 748935686 (sans le 0)">
+      </div>
+      <p class="dim" style="margin:6px 0 0;font-size:12px;">Pour WhatsApp, entrez le numéro sans le 0 initial — l'indicatif du pays choisi est ajouté automatiquement.</p>
+      <label>E-mail (optionnel)</label>
+      <input type="email" id="cEmail" placeholder="Ex. koffi@email.com">
+      <label>Groupe (optionnel)</label>
+      <select id="cGroup"><option value="">— Aucun —</option></select>
+      <div style="height:12px"></div>
+      <button class="btn btn-primary" id="addContactBtn">Ajouter le contact</button>
     </div>
-    <button class="btn-primary" id="loginBtn">Se connecter</button>
 
-    <div class="status" id="status"></div>
+    <div class="card">
+      <h2>Créer un groupe</h2>
+      <div class="row">
+        <input type="text" id="gName" placeholder="Ex. Clients VIP">
+        <button class="btn btn-secondary" id="addGroupBtn" style="flex:0 0 auto;">Créer</button>
+      </div>
+      <div id="groupChips" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="card">
+      <h2>Vos contacts (<span id="contactCount">0</span>)</h2>
+      <input type="text" id="contactSearch" placeholder="Rechercher un contact…" style="margin-bottom:10px;">
+      <div id="contactList"><div class="empty">Aucun contact pour l'instant.</div></div>
+    </div>
+
+    <div class="card">
+      <h2>Sauvegarde</h2>
+      <p class="dim">Vos contacts et groupes restent sur cet appareil. Exportez-les pour les garder en sécurité ou les retrouver sur un autre téléphone.</p>
+      <div class="row">
+        <button class="btn btn-secondary" id="exportBtn">Exporter (.json)</button>
+        <label class="btn btn-secondary" style="text-align:center;">
+          Importer
+          <input type="file" id="importFile" accept=".json" style="display:none;">
+        </label>
+      </div>
+    </div>
   </div>
 
-  <div class="hint" id="troubleshoot" style="display:none;">
-    Rien ne se passe après « Se connecter » ? Vérifiez que votre téléphone est bien
-    rattaché au réseau Wi-Fi ci-dessus (et non aux données mobiles), puis réessayez.
+  <!-- ===================== SMS ===================== -->
+  <div class="tabpanel" id="tab-sms">
+    <div class="hint">
+      L'envoi se fait via l'application SMS déjà installée sur votre téléphone (et votre forfait SMS actuel) — l'app prépare le message et les numéros, mais c'est vous qui appuyez sur « Envoyer » à chaque lot, comme l'exige Android/iOS pour éviter le spam.
+    </div>
+    <div class="card">
+      <h2>Message</h2>
+      <textarea id="smsBody" placeholder="Votre message…"></textarea>
+      <div class="counter" id="smsCounter">0 caractère · 1 SMS</div>
+    </div>
+    <div class="card">
+      <h2>Numéro expéditeur (mémo)</h2>
+      <p class="dim">Comme votre téléphone a deux puces, choisissez ici quel numéro doit servir — l'app l'affichera sur chaque lot pour vous le rappeler. C'est vous qui sélectionnez la bonne SIM sur l'écran d'envoi de votre téléphone (ou réglez votre SIM par défaut pour les SMS dans les paramètres).</p>
+      <select id="smsSenderNumber">
+        <option value="07 49 97 09 18">07 49 97 09 18</option>
+        <option value="07 48 93 56 86" selected>07 48 93 56 86</option>
+        <option value="__other__">Autre numéro…</option>
+      </select>
+      <input type="text" id="smsSenderOther" placeholder="Numéro" style="display:none;margin-top:8px;">
+    </div>
+    <div class="card">
+      <h2>Destinataires</h2>
+      <div id="smsRecipientPicker"></div>
+    </div>
+    <div class="card">
+      <h2>Taille des lots</h2>
+      <p class="dim">Un « lot » = un envoi à préparer. L'app n'impose aucune limite, mais l'application SMS de votre téléphone, elle, en a une : au-delà d'une dizaine à une vingtaine de numéros dans un même envoi groupé, certains téléphones refusent ou tronquent le message. 15 par défaut est un bon compromis — testez plus haut si le vôtre l'accepte.</p>
+      <input type="number" id="smsBatchSize" value="15" min="1">
+      <div style="height:12px"></div>
+      <button class="btn btn-primary" id="buildSmsBatches">Préparer les envois</button>
+    </div>
+    <div id="smsBatches"></div>
   </div>
 
-  <footer>
-    Un souci de connexion&nbsp;? <a class="tel" href="tel:0748935686">07 48 93 56 86</a>
-  </footer>
+  <!-- ===================== EMAIL ===================== -->
+  <div class="tabpanel" id="tab-email">
+    <div class="hint">
+      Un e-mail peut avoir de nombreux destinataires en copie cachée (CCI) dans un seul envoi — c'est le seul des trois volets où un vrai envoi groupé en un clic est possible. Votre appli e-mail s'ouvre déjà remplie ; il ne reste qu'à appuyer sur Envoyer.
+    </div>
+    <div class="card">
+      <h2>Message</h2>
+      <label>Objet</label>
+      <input type="text" id="mailSubject" placeholder="Objet de l'e-mail">
+      <label>Corps du message</label>
+      <textarea id="mailBody" placeholder="Votre message…" style="min-height:150px;"></textarea>
+    </div>
+    <div class="card">
+      <h2>Destinataires</h2>
+      <p class="dim">Seuls les contacts avec une adresse e-mail enregistrée apparaissent ici.</p>
+      <div id="mailRecipientPicker"></div>
+    </div>
+    <div class="card">
+      <h2>Taille des lots</h2>
+      <p class="dim">Pas de limite imposée par l'app. Beaucoup de messageries plafonnent toutefois un envoi autour de 50 à 100 destinataires — 40 par défaut reste prudent.</p>
+      <input type="number" id="mailBatchSize" value="40" min="1">
+      <div style="height:12px"></div>
+      <button class="btn btn-primary" id="buildMailBatches">Préparer les envois</button>
+    </div>
+    <div id="mailBatches"></div>
+  </div>
+
+  <!-- ===================== MEDIA / WHATSAPP ===================== -->
+  <div class="tabpanel" id="tab-media">
+    <div class="hint">
+      Après avoir appuyé sur « Partager via WhatsApp », c'est WhatsApp qui vous permettra de cocher plusieurs contacts ou groupes pour l'envoi groupé — exactement comme un partage depuis votre galerie.
+    </div>
+    <div class="card">
+      <h2>Choisir des fichiers</h2>
+      <div class="row">
+        <label class="btn btn-secondary" style="text-align:center;">
+          Galerie
+          <input type="file" id="mediaGallery" accept="image/*,video/*,.pdf,.doc,.docx" multiple style="display:none;">
+        </label>
+        <label class="btn btn-secondary" style="text-align:center;">
+          Photo
+          <input type="file" id="mediaCameraPhoto" accept="image/*" capture="environment" style="display:none;">
+        </label>
+        <label class="btn btn-secondary" style="text-align:center;">
+          Vidéo
+          <input type="file" id="mediaCameraVideo" accept="video/*" capture="environment" style="display:none;">
+        </label>
+      </div>
+      <div class="media-grid" id="mediaGrid"></div>
+      <label>Légende (optionnelle)</label>
+      <textarea id="mediaCaption" placeholder="Un message à joindre…" style="min-height:70px;"></textarea>
+      <div style="height:12px"></div>
+      <button class="btn btn-primary" id="shareWhatsappBtn">Partager via WhatsApp</button>
+      <div class="counter" id="mediaStatus" style="text-align:left;margin-top:8px;"></div>
+    </div>
+  </div>
+
+  <!-- ===================== PROGRAMMÉS (rappels, pas d'envoi automatique) ===================== -->
+  <div class="tabpanel" id="tab-scheduled">
+    <div class="hint">
+      Ceci programme un <strong>rappel</strong>, pas un envoi automatique : à la date et
+      l'heure choisies, l'app prépare les envois et vous prévient — vous gardez la main,
+      un appui sur Envoyer reste nécessaire à chaque lot (ou, pour WhatsApp, un tap par
+      contact), comme partout ailleurs dans l'app. Aucun envoi n'a lieu si l'app n'est pas
+      ouverte à ce moment-là ou juste après.
+    </div>
+    <div class="card">
+      <h2>Nouveau rappel</h2>
+      <label>Type d'envoi</label>
+      <select id="schedType">
+        <option value="sms">SMS</option>
+        <option value="email">E-mail</option>
+        <option value="whatsapp">WhatsApp</option>
+      </select>
+      <div id="schedSubjectWrap" style="display:none;">
+        <label>Objet</label>
+        <input type="text" id="schedSubject" placeholder="Objet de l'e-mail">
+      </div>
+      <div id="schedSenderWrap">
+        <label>Numéro expéditeur (mémo)</label>
+        <select id="schedSenderNumber">
+          <option value="07 49 97 09 18">07 49 97 09 18</option>
+          <option value="07 48 93 56 86" selected>07 48 93 56 86</option>
+          <option value="__other__">Autre numéro…</option>
+        </select>
+        <input type="text" id="schedSenderOther" placeholder="Numéro" style="display:none;margin-top:8px;">
+      </div>
+      <label>Message</label>
+      <textarea id="schedBody" placeholder="Votre message…"></textarea>
+      <label>Date et heure</label>
+      <input type="datetime-local" id="schedWhen">
+      <label>Destinataires</label>
+      <div id="schedRecipientPicker"></div>
+      <div id="schedBatchWrap">
+        <label>Taille des lots</label>
+        <input type="number" id="schedBatchSize" value="15" min="1">
+      </div>
+      <div style="height:12px"></div>
+      <button class="btn btn-primary" id="createSchedBtn">Créer le rappel</button>
+      <div class="counter" id="notifPermStatus" style="text-align:left;margin-top:10px;">
+        <button class="btn btn-secondary btn-small" id="askNotifBtn" type="button">Activer les notifications</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>Rappels enregistrés</h2>
+      <div id="schedList"><div class="empty">Aucun rappel programmé.</div></div>
+    </div>
+  </div>
+
+  <footer>SHAMAN PRODUCTION — outil interne d'envoi groupé</footer>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jsQR/1.4.0/jsQR.js"></script>
 <script>
-/* ====== CONFIGURATION — à adapter à votre installation ====== */
-const CONFIG = {
-  ssid: "WI-FI 6 SHAMAN HOTSPOT",     // nom exact du réseau à afficher
-  hotspotIp: "10.10.10.1",            // adresse du portail captif (vue dans le QR du ticket)
-  loginPath: "/login",                // chemin de connexion du portail
-};
-/* ============================================================= */
+/* ================= STORAGE ================= */
+const DB_KEY = 'shaman_production_db_v1';
+function loadDB(){
+  try{
+    const raw = localStorage.getItem(DB_KEY);
+    if(raw) return JSON.parse(raw);
+  }catch(e){}
+  return { contacts: [], groups: [], scheduled: [] };
+}
+function saveDB(){ localStorage.setItem(DB_KEY, JSON.stringify(db)); }
+let db = loadDB();
+if(!db.scheduled) db.scheduled = [];
 
-document.getElementById('ssidName').textContent = CONFIG.ssid;
+/* ================= APPEL RAPIDE ================= */
+const quickCallNumber = document.getElementById('quickCallNumber');
+const quickCallBtn = document.getElementById('quickCallBtn');
+function updateQuickCallLink(){
+  const n = quickCallNumber.value.trim().replace(/\s+/g,'');
+  quickCallBtn.href = n ? `tel:${n}` : 'tel:';
+}
+quickCallNumber.addEventListener('input', updateQuickCallLink);
 
-const pill1 = document.getElementById('pill1');
-const pill2 = document.getElementById('pill2');
-const wifiCard = document.getElementById('wifiCard');
-const scanCard = document.getElementById('scanCard');
-const troubleshoot = document.getElementById('troubleshoot');
-const statusEl = document.getElementById('status');
-const codeInput = document.getElementById('codeInput');
-const loginBtn = document.getElementById('loginBtn');
-const camToggle = document.getElementById('camToggle');
-const video = document.getElementById('video');
-const canvas = document.getElementById('canvas');
-const ctx = canvas.getContext('2d');
-
-pill1.classList.add('done');
-
-document.getElementById('joinedBtn').addEventListener('click', () => {
-  wifiCard.style.display = 'none';
-  scanCard.style.display = 'block';
-  troubleshoot.style.display = 'block';
-  pill2.classList.add('done');
-  codeInput.focus();
+/* ================= TABS ================= */
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tabpanel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+    if(btn.dataset.tab === 'sms') renderRecipientPicker('smsRecipientPicker', 'sms');
+    if(btn.dataset.tab === 'email') renderRecipientPicker('mailRecipientPicker', 'email');
+    if(btn.dataset.tab === 'scheduled') renderRecipientPicker('schedRecipientPicker', document.getElementById('schedType').value === 'email' ? 'email' : 'sms');
+  });
 });
 
-function setStatus(msg, kind){
-  statusEl.textContent = msg;
-  statusEl.className = 'status' + (kind ? ' ' + kind : '');
+/* ================= AVATAR FULLSCREEN ================= */
+const overlay = document.getElementById('fullscreenOverlay');
+document.getElementById('avatarBtn').addEventListener('click', () => { overlay.style.display = 'flex'; });
+overlay.addEventListener('click', () => { overlay.style.display = 'none'; });
+
+/* ================= CONTACTS ================= */
+function refreshGroupSelect(){
+  const sel = document.getElementById('cGroup');
+  sel.innerHTML = '<option value="">— Aucun —</option>' +
+    db.groups.map(g => `<option value="${g.id}">${escapeHtml(g.name)}</option>`).join('');
 }
+function refreshGroupChips(){
+  const el = document.getElementById('groupChips');
+  if(!db.groups.length){ el.innerHTML = ''; return; }
+  el.innerHTML = db.groups.map(g => {
+    const count = db.contacts.filter(c => c.group === g.id).length;
+    return `<div class="list-item">
+      <div class="info">
+        <div class="name">${escapeHtml(g.name)}</div>
+        <div class="meta">${count} contact${count>1?'s':''}</div>
+      </div>
+      <div class="row" style="flex:0 0 auto;gap:6px;">
+        <button class="btn btn-secondary btn-small" data-view-group="${g.id}">Voir</button>
+        <button class="btn btn-secondary btn-small" data-edit-group="${g.id}">Renommer</button>
+        <button class="btn btn-danger btn-small" data-del-group="${g.id}">Suppr.</button>
+      </div>
+    </div>`;
+  }).join('');
 
-// Extract a ticket code / credentials from whatever the QR code contains.
-// Handles: a full login URL like the one printed on the ticket
-// (http://10.10.10.1/login?username=67758&password=67758), or a bare
-// numeric code (5–8 digits) typed or scanned on its own.
-function parseTicketPayload(raw){
-  const text = (raw || '').trim();
-  try{
-    const url = new URL(text);
-    const u = url.searchParams.get('username');
-    const p = url.searchParams.get('password');
-    if(u) return { username: u, password: p || u };
-  }catch(e){ /* not a URL, fall through */ }
-
-  const digits = text.match(/\d{4,8}/);
-  if(digits) return { username: digits[0], password: digits[0] };
-  return null;
-}
-
-function buildLoginUrl({username, password}){
-  const u = new URL(`http://${CONFIG.hotspotIp}${CONFIG.loginPath}`);
-  u.searchParams.set('username', username);
-  u.searchParams.set('password', password);
-  return u.toString();
-}
-
-function goLogin(creds, sourceLabel){
-  const url = buildLoginUrl(creds);
-  setStatus(`Connexion avec le code ${creds.username}…`, 'ok');
-  // Top-level navigation (not fetch) — required because the app is served
-  // over HTTPS while the hotspot login is a plain HTTP address on the
-  // local network; browsers block that as a background request but allow
-  // a full page redirect.
-  window.location.href = url;
-}
-
-loginBtn.addEventListener('click', () => {
-  const raw = codeInput.value.trim();
-  if(!raw){ setStatus('Entrez le code inscrit sur votre ticket.', 'err'); return; }
-  const creds = parseTicketPayload(raw);
-  if(!creds){ setStatus('Code non reconnu — vérifiez les chiffres du ticket.', 'err'); return; }
-  goLogin(creds);
-});
-codeInput.addEventListener('keydown', (e) => { if(e.key === 'Enter') loginBtn.click(); });
-
-// ---- Camera QR scanning ----
-let scanning = false;
-let stream = null;
-let rafId = null;
-let videoTrack = null;
-
-// Most Android/Chrome phones expose a native, hardware-backed QR reader
-// (the Shape Detection API) — the same engine Chrome itself uses. It's
-// far more tolerant of small, tilted, or low-contrast printed codes than
-// a pure-JS reader like jsQR. We use it whenever it's available, and only
-// fall back to jsQR (needed on iOS/Safari, which doesn't implement it).
-let barcodeDetector = null;
-let useNativeDetector = false;
-let detectBusy = false;
-
-async function initDetector(){
-  useNativeDetector = false;
-  barcodeDetector = null;
-  if(!('BarcodeDetector' in window)) return;
-  try{
-    if('getSupportedFormats' in BarcodeDetector){
-      const formats = await BarcodeDetector.getSupportedFormats();
-      if(!formats.includes('qr_code')) return;
-    }
-    barcodeDetector = new BarcodeDetector({ formats: ['qr_code'] });
-    useNativeDetector = true;
-  }catch(e){
-    useNativeDetector = false;
-  }
-}
-
-async function startCamera(){
-  try{
-    stream = await navigator.mediaDevices.getUserMedia({
-      video: {
-        facingMode: { ideal: 'environment' },
-        width: { ideal: 1920 },
-        height: { ideal: 1920 },
-        // Some Android browsers default to a fixed, far-away focus on the
-        // web camera stream — this is the #1 cause of blurry scans up
-        // close. Ask explicitly for continuous autofocus where supported.
-        advanced: [{ focusMode: 'continuous' }]
+  el.querySelectorAll('[data-view-group]').forEach(b => {
+    b.addEventListener('click', () => {
+      const g = db.groups.find(x => x.id === b.dataset.viewGroup);
+      document.getElementById('contactSearch').value = '';
+      renderContactList(null, g.id);
+      document.getElementById('contactList').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+  });
+  el.querySelectorAll('[data-edit-group]').forEach(b => {
+    b.addEventListener('click', () => {
+      const g = db.groups.find(x => x.id === b.dataset.editGroup);
+      const newName = prompt('Nouveau nom du groupe :', g.name);
+      if(newName && newName.trim()){
+        g.name = newName.trim();
+        saveDB(); refreshGroupSelect(); refreshGroupChips(); renderContactList();
       }
     });
-    video.srcObject = stream;
-    await video.play();
-    videoTrack = stream.getVideoTracks()[0];
-    await ensureContinuousFocus();
-    await initDetector();
-    document.getElementById('detectorBadge').textContent =
-      useNativeDetector ? 'Lecteur : natif du téléphone' : 'Lecteur : secours (jsQR)';
-
-    // jsQR (the fallback) loads from a CDN — if we'll need it, make sure
-    // it's actually ready rather than scanning silently against nothing.
-    if(!useNativeDetector && typeof jsQR === 'undefined'){
-      setStatus('Chargement du lecteur de QR code…');
-      const ready = await waitForJsQR(5000);
-      if(!ready){
-        setStatus("Le lecteur de QR code n'a pas pu se charger (connexion internet faible ou bloquée). Utilisez la saisie manuelle ci-dessous.", 'err');
-        return;
-      }
-    }
-
-    scanning = true;
-    camToggle.textContent = 'Arrêter la caméra';
-    setStatus('Visez le QR code du ticket, à ~15 cm, bien éclairé.');
-    frameCount = 0;
-    tick();
-  }catch(err){
-    setStatus("Caméra indisponible — utilisez la saisie manuelle ci-dessous.", 'err');
-  }
+  });
+  el.querySelectorAll('[data-del-group]').forEach(b => {
+    b.addEventListener('click', () => {
+      const g = db.groups.find(x => x.id === b.dataset.delGroup);
+      const count = db.contacts.filter(c => c.group === g.id).length;
+      const msg = count > 0
+        ? `Supprimer « ${g.name} » ? Les ${count} contact(s) resteront, mais ne seront plus dans ce groupe.`
+        : `Supprimer « ${g.name} » ?`;
+      if(!confirm(msg)) return;
+      db.contacts.forEach(c => { if(c.group === g.id) c.group = ''; });
+      db.groups = db.groups.filter(x => x.id !== g.id);
+      saveDB(); refreshGroupSelect(); refreshGroupChips(); renderContactList();
+    });
+  });
+}
+function escapeHtml(s){
+  return (s||'').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-function waitForJsQR(timeoutMs){
-  return new Promise((resolve) => {
-    const start = Date.now();
-    (function poll(){
-      if(typeof jsQR !== 'undefined') return resolve(true);
-      if(Date.now() - start > timeoutMs) return resolve(false);
-      setTimeout(poll, 150);
-    })();
+document.getElementById('addGroupBtn').addEventListener('click', () => {
+  const name = document.getElementById('gName').value.trim();
+  if(!name) return;
+  db.groups.push({ id: 'g' + Date.now(), name });
+  document.getElementById('gName').value = '';
+  saveDB(); refreshGroupSelect(); refreshGroupChips();
+});
+
+document.getElementById('addContactBtn').addEventListener('click', () => {
+  const name = document.getElementById('cName').value.trim();
+  const dial = document.getElementById('cCountry').value;
+  const localNumber = document.getElementById('cPhone').value.trim().replace(/^0+/, '').replace(/\s+/g,'');
+  const phone = localNumber ? `+${dial}${localNumber}` : '';
+  const email = document.getElementById('cEmail').value.trim();
+  const group = document.getElementById('cGroup').value;
+  if(!name || (!phone && !email)){
+    alert('Entrez au moins un nom et un numéro ou un e-mail.');
+    return;
+  }
+  db.contacts.push({ id: 'c' + Date.now() + Math.random().toString(36).slice(2,7), name, phone, email, group });
+  document.getElementById('cName').value = '';
+  document.getElementById('cPhone').value = '';
+  document.getElementById('cEmail').value = '';
+  document.getElementById('cGroup').value = '';
+  saveDB(); renderContactList(); refreshGroupChips();
+});
+
+function renderContactList(filter, groupFilter){
+  const el = document.getElementById('contactList');
+  document.getElementById('contactCount').textContent = db.contacts.length;
+  let list = db.contacts;
+  if(filter){
+    const f = filter.toLowerCase();
+    list = list.filter(c => (c.name||'').toLowerCase().includes(f) || (c.phone||'').includes(f) || (c.email||'').toLowerCase().includes(f));
+  }
+  let banner = '';
+  if(groupFilter){
+    list = list.filter(c => c.group === groupFilter);
+    const g = db.groups.find(x => x.id === groupFilter);
+    banner = `<div class="hint" style="display:flex;justify-content:space-between;align-items:center;">
+      <span>Groupe : ${escapeHtml(g ? g.name : '')}</span>
+      <button class="btn btn-secondary btn-small" id="clearGroupFilter" style="flex:0 0 auto;">✕ Tout voir</button>
+    </div>`;
+  }
+  if(!list.length){ el.innerHTML = banner + '<div class="empty">Aucun contact.</div>'; bindClearFilter(); return; }
+  el.innerHTML = banner + list.map(c => {
+    const g = db.groups.find(g => g.id === c.group);
+    return `<div class="list-item">
+      <div class="info">
+        <div class="name">${escapeHtml(c.name)}</div>
+        <div class="meta">${escapeHtml(c.phone||'')}${c.phone && c.email ? ' · ' : ''}${escapeHtml(c.email||'')}${g ? ' · '+escapeHtml(g.name) : ''}</div>
+      </div>
+      <div class="row" style="flex:0 0 auto;gap:6px;">
+        ${c.phone ? `<a class="btn btn-secondary btn-small" style="text-decoration:none;" href="tel:${c.phone}">📞 Appeler</a>` : ''}
+        <button class="btn btn-danger btn-small" data-del="${c.id}">Suppr.</button>
+      </div>
+    </div>`;
+  }).join('');
+  el.querySelectorAll('[data-del]').forEach(b => {
+    b.addEventListener('click', () => {
+      db.contacts = db.contacts.filter(c => c.id !== b.dataset.del);
+      saveDB(); renderContactList(document.getElementById('contactSearch').value, groupFilter);
+      refreshGroupChips();
+    });
+  });
+  bindClearFilter();
+  function bindClearFilter(){
+    const btn = document.getElementById('clearGroupFilter');
+    if(btn) btn.addEventListener('click', () => renderContactList());
+  }
+}
+document.getElementById('contactSearch').addEventListener('input', (e) => renderContactList(e.target.value));
+
+document.getElementById('exportBtn').addEventListener('click', () => {
+  const blob = new Blob([JSON.stringify(db, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'shaman-production-contacts.json';
+  a.click();
+});
+document.getElementById('importFile').addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if(!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    try{
+      const imported = JSON.parse(reader.result);
+      if(imported.contacts && imported.groups){
+        db = imported; saveDB();
+        refreshGroupSelect(); refreshGroupChips(); renderContactList();
+        alert('Import réussi.');
+      } else { alert('Fichier invalide.'); }
+    }catch(err){ alert('Fichier invalide.'); }
+  };
+  reader.readAsText(file);
+});
+
+/* ================= RECIPIENT PICKER (shared by SMS & Email) ================= */
+function renderRecipientPicker(containerId, mode){
+  const el = document.getElementById(containerId);
+  const needsField = mode === 'sms' ? 'phone' : 'email';
+  const eligible = db.contacts.filter(c => c[needsField]);
+
+  let html = '';
+  if(db.groups.length){
+    html += '<div style="margin-bottom:10px;">';
+    db.groups.forEach(g => {
+      html += `<div class="check-row">
+        <input type="checkbox" class="group-check" data-group="${g.id}" data-mode="${mode}">
+        <label>Groupe : ${escapeHtml(g.name)}</label>
+      </div>`;
+    });
+    html += '</div>';
+  }
+  if(!eligible.length){
+    html += `<div class="empty">Aucun contact avec ${mode === 'sms' ? 'un numéro' : 'un e-mail'} enregistré.</div>`;
+  } else {
+    eligible.forEach(c => {
+      html += `<div class="check-row">
+        <input type="checkbox" class="contact-check" data-id="${c.id}" data-mode="${mode}" data-group="${c.group||''}">
+        <label>${escapeHtml(c.name)} — ${escapeHtml(c[needsField])}</label>
+      </div>`;
+    });
+  }
+  el.innerHTML = html;
+
+  el.querySelectorAll('.group-check').forEach(gc => {
+    gc.addEventListener('change', () => {
+      el.querySelectorAll(`.contact-check[data-group="${gc.dataset.group}"]`).forEach(cc => {
+        cc.checked = gc.checked;
+      });
+    });
   });
 }
 
-// Explicitly (re)apply continuous autofocus if the device exposes that
-// capability, and expose a manual "tap to refocus" fallback otherwise.
-async function ensureContinuousFocus(){
-  if(!videoTrack || !videoTrack.getCapabilities) return;
-  try{
-    const caps = videoTrack.getCapabilities();
-    if(caps.focusMode && caps.focusMode.includes('continuous')){
-      await videoTrack.applyConstraints({ advanced: [{ focusMode: 'continuous' }] });
-    }
-  }catch(e){ /* not supported on this device — tap-to-refocus below covers it */ }
+function getSelected(containerId){
+  const el = document.getElementById(containerId);
+  const ids = Array.from(el.querySelectorAll('.contact-check:checked')).map(c => c.dataset.id);
+  return db.contacts.filter(c => ids.includes(c.id));
 }
 
-// Tapping the video re-triggers focus: on devices without continuous
-// autofocus, briefly switching to single-shot focus and back nudges most
-// camera stacks into refocusing on what's currently in frame.
-video.addEventListener('click', async () => {
-  if(!videoTrack || !videoTrack.getCapabilities) return;
-  try{
-    const caps = videoTrack.getCapabilities();
-    if(caps.focusMode && caps.focusMode.includes('single-shot')){
-      await videoTrack.applyConstraints({ advanced: [{ focusMode: 'single-shot' }] });
-      setTimeout(ensureContinuousFocus, 400);
-    }
-  }catch(e){ /* ignore — no manual focus control on this device */ }
+/* ================= SMS ================= */
+const smsBody = document.getElementById('smsBody');
+smsBody.addEventListener('input', () => {
+  const len = smsBody.value.length;
+  const isGSM = /^[\x00-\x7F\u00A0-\u00FF€]*$/.test(smsBody.value);
+  const perSeg = isGSM ? 160 : 70;
+  const segs = len === 0 ? 1 : Math.ceil(len / (len > perSeg ? perSeg - 7 : perSeg));
+  const counter = document.getElementById('smsCounter');
+  counter.textContent = `${len} caractère${len>1?'s':''} · ${segs} SMS${segs>1?' (message concaténé)':''}`;
+  counter.className = 'counter' + (segs > 1 ? ' warn' : '');
 });
 
-function stopCamera(){
-  scanning = false;
-  if(rafId) cancelAnimationFrame(rafId);
-  if(stream) stream.getTracks().forEach(t => t.stop());
-  camToggle.textContent = 'Activer la caméra';
+const smsSenderSelect = document.getElementById('smsSenderNumber');
+const smsSenderOther = document.getElementById('smsSenderOther');
+smsSenderSelect.addEventListener('change', () => {
+  smsSenderOther.style.display = smsSenderSelect.value === '__other__' ? 'block' : 'none';
+});
+function getSmsSenderLabel(){
+  return smsSenderSelect.value === '__other__' ? smsSenderOther.value.trim() : smsSenderSelect.value;
 }
 
-camToggle.addEventListener('click', () => {
-  if(scanning){ stopCamera(); setStatus(''); }
-  else startCamera();
-});
+document.getElementById('buildSmsBatches').addEventListener('click', () => {
+  const recipients = getSelected('smsRecipientPicker');
+  const body = smsBody.value.trim();
+  const batchSize = Math.max(1, parseInt(document.getElementById('smsBatchSize').value) || 15);
+  const senderLabel = getSmsSenderLabel();
+  if(!recipients.length){ alert('Sélectionnez au moins un destinataire.'); return; }
+  if(!body){ alert('Écrivez un message.'); return; }
 
-let frameCount = 0;
-const MAX_SCAN_DIM = 900; // downscale for speed & reliability, jsQR path only
-
-function handleDecoded(rawValue){
-  const creds = parseTicketPayload(rawValue);
-  if(creds){
-    stopCamera();
-    goLogin(creds);
-    return true;
+  const batches = [];
+  for(let i = 0; i < recipients.length; i += batchSize){
+    batches.push(recipients.slice(i, i + batchSize));
   }
-  setStatus('QR code lu, mais le contenu ne ressemble pas à un ticket valide.', 'err');
-  return false;
+  renderBatches('smsBatches', batches, (batch) => {
+    const numbers = batch.map(c => c.phone.replace(/\s+/g,'')).join(',');
+    return `sms:${numbers}?body=${encodeURIComponent(body)}`;
+  }, 'sms', senderLabel);
+});
+
+/* ================= EMAIL ================= */
+document.getElementById('buildMailBatches').addEventListener('click', () => {
+  const recipients = getSelected('mailRecipientPicker');
+  const subject = document.getElementById('mailSubject').value.trim();
+  const body = document.getElementById('mailBody').value.trim();
+  const batchSize = Math.max(1, parseInt(document.getElementById('mailBatchSize').value) || 40);
+  if(!recipients.length){ alert('Sélectionnez au moins un destinataire.'); return; }
+  if(!subject && !body){ alert('Écrivez un objet ou un message.'); return; }
+
+  const batches = [];
+  for(let i = 0; i < recipients.length; i += batchSize){
+    batches.push(recipients.slice(i, i + batchSize));
+  }
+  renderBatches('mailBatches', batches, (batch) => {
+    const bcc = batch.map(c => c.email).join(',');
+    return `mailto:?bcc=${encodeURIComponent(bcc)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  }, 'email');
+});
+
+/* ================= BATCH RENDERING (shared) ================= */
+function renderBatches(containerId, batches, buildLink, kind, senderLabel){
+  const el = document.getElementById(containerId);
+  if(!batches.length){ el.innerHTML = ''; return; }
+  el.innerHTML = batches.map((batch, i) => `
+    <div class="batch" id="${containerId}-batch-${i}">
+      <div class="batch-head">
+        <span class="label">Lot ${i+1} / ${batches.length}</span>
+        <span class="count">${batch.length} destinataire${batch.length>1?'s':''}</span>
+      </div>
+      ${senderLabel ? `<div style="font-size:12.5px;color:#C43E71;font-weight:700;margin-bottom:8px;">📱 Envoyer depuis : ${escapeHtml(senderLabel)}</div>` : ''}
+      <div class="row">
+        <a class="btn btn-primary" style="text-align:center;text-decoration:none;" href="${buildLink(batch)}" data-batch="${i}" data-container="${containerId}">
+          ${kind === 'sms' ? 'Ouvrir SMS' : 'Ouvrir e-mail'}
+        </a>
+        <button class="btn btn-secondary btn-small" data-mark="${i}" data-container="${containerId}" style="flex:0 0 auto;">✓ Envoyé</button>
+      </div>
+    </div>
+  `).join('');
+
+  el.querySelectorAll('[data-mark]').forEach(b => {
+    b.addEventListener('click', () => {
+      const batchEl = document.getElementById(`${b.dataset.container}-batch-${b.dataset.mark}`);
+      if(batchEl.classList.contains('done')) return;
+      batchEl.classList.add('done');
+      batchEl.querySelector('.batch-head').insertAdjacentHTML('beforeend', '<span class="sent-badge">✓ Envoyé</span>');
+    });
+  });
 }
 
-async function tick(){
-  if(!scanning) return;
+/* ================= MEDIA / WHATSAPP ================= */
+let pickedFiles = [];
+
+function addFiles(fileList){
+  Array.from(fileList).forEach(f => pickedFiles.push(f));
+  renderMediaGrid();
+}
+document.getElementById('mediaGallery').addEventListener('change', (e) => addFiles(e.target.files));
+document.getElementById('mediaCameraPhoto').addEventListener('change', (e) => addFiles(e.target.files));
+document.getElementById('mediaCameraVideo').addEventListener('change', (e) => addFiles(e.target.files));
+
+function renderMediaGrid(){
+  const grid = document.getElementById('mediaGrid');
+  grid.innerHTML = pickedFiles.map((f, i) => {
+    const url = URL.createObjectURL(f);
+    const isVideo = f.type.startsWith('video/');
+    return `<div class="media-thumb">
+      ${isVideo ? `<video src="${url}" muted></video>` : `<img src="${url}">`}
+      <button class="rm" data-rm="${i}">✕</button>
+    </div>`;
+  }).join('');
+  grid.querySelectorAll('[data-rm]').forEach(b => {
+    b.addEventListener('click', () => {
+      pickedFiles.splice(parseInt(b.dataset.rm), 1);
+      renderMediaGrid();
+    });
+  });
+}
+
+document.getElementById('shareWhatsappBtn').addEventListener('click', async () => {
+  const status = document.getElementById('mediaStatus');
+  const caption = document.getElementById('mediaCaption').value.trim();
+  if(!pickedFiles.length && !caption){
+    status.textContent = 'Choisissez au moins un fichier ou écrivez une légende.';
+    return;
+  }
+  const shareData = {};
+  if(caption) shareData.text = caption;
+  if(pickedFiles.length){
+    if(navigator.canShare && navigator.canShare({ files: pickedFiles })){
+      shareData.files = pickedFiles;
+    }
+  }
   try{
-    if(video.readyState === video.HAVE_ENOUGH_DATA && video.videoWidth > 0){
-
-      if(useNativeDetector && barcodeDetector){
-        // Native path: feed the live video frame directly to the OS
-        // decoder — no manual downscaling needed, it reads full quality.
-        if(!detectBusy){
-          detectBusy = true;
-          try{
-            const codes = await barcodeDetector.detect(video);
-            if(codes && codes.length){
-              if(handleDecoded(codes[0].rawValue)){ detectBusy = false; return; }
-            } else {
-              frameCount++;
-              if(frameCount === 90){
-                setStatus('Toujours en recherche… rapprochez le ticket pour que le QR remplisse bien le cadre.');
-              }
-            }
-          }catch(e){
-            console.error('Détecteur natif indisponible, bascule sur le lecteur de secours:', e);
-            useNativeDetector = false; // fall back to jsQR from the next frame on
-            document.getElementById('detectorBadge').textContent = 'Lecteur : secours (jsQR)';
-          }
-          detectBusy = false;
-        }
-      } else {
-        // Fallback path: draw to a canvas and decode with jsQR.
-        const scale = Math.min(1, MAX_SCAN_DIM / Math.max(video.videoWidth, video.videoHeight));
-        const w = Math.round(video.videoWidth * scale);
-        const h = Math.round(video.videoHeight * scale);
-        canvas.width = w;
-        canvas.height = h;
-        ctx.drawImage(video, 0, 0, w, h);
-        const imageData = ctx.getImageData(0, 0, w, h);
-        const code = (typeof jsQR !== 'undefined')
-          ? jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: 'attemptBoth' })
-          : null;
-
-        if(code && code.data){
-          if(handleDecoded(code.data)) return;
-        } else {
-          frameCount++;
-          if(frameCount === 90){
-            setStatus('Toujours en recherche… rapprochez le ticket pour que le QR remplisse bien le cadre.');
-          }
-        }
-      }
+    if(navigator.share){
+      await navigator.share(shareData);
+      status.textContent = 'Partage ouvert — choisissez WhatsApp puis vos contacts.';
+    } else {
+      status.textContent = "Le partage n'est pas pris en charge par ce navigateur. Ouvrez WhatsApp et joignez les fichiers manuellement depuis votre galerie.";
     }
   }catch(err){
-    // Never let a single bad frame kill the scan loop silently — log it
-    // and keep trying on the next frame.
-    console.error('Erreur de lecture QR:', err);
+    if(err.name !== 'AbortError'){
+      status.textContent = "Partage indisponible ici — ouvrez WhatsApp et joignez les fichiers manuellement.";
+    }
   }
-  rafId = requestAnimationFrame(tick);
+});
+
+/* ================= RAPPELS PROGRAMMÉS ================= */
+const schedTypeSelect = document.getElementById('schedType');
+schedTypeSelect.addEventListener('change', () => {
+  const type = schedTypeSelect.value;
+  document.getElementById('schedSubjectWrap').style.display = type === 'email' ? 'block' : 'none';
+  document.getElementById('schedSenderWrap').style.display = type === 'email' ? 'none' : 'block';
+  document.getElementById('schedBatchWrap').style.display = type === 'whatsapp' ? 'none' : 'block';
+  renderRecipientPicker('schedRecipientPicker', type === 'email' ? 'email' : 'sms');
+});
+
+const schedSenderSelect = document.getElementById('schedSenderNumber');
+const schedSenderOther = document.getElementById('schedSenderOther');
+schedSenderSelect.addEventListener('change', () => {
+  schedSenderOther.style.display = schedSenderSelect.value === '__other__' ? 'block' : 'none';
+});
+function getSchedSenderLabel(){
+  return schedSenderSelect.value === '__other__' ? schedSenderOther.value.trim() : schedSenderSelect.value;
 }
+
+document.getElementById('askNotifBtn').addEventListener('click', async () => {
+  if(!('Notification' in window)){
+    document.getElementById('notifPermStatus').insertAdjacentHTML('beforeend', '<span style="margin-left:8px;">Non disponible sur ce navigateur.</span>');
+    return;
+  }
+  const perm = await Notification.requestPermission();
+  document.getElementById('askNotifBtn').textContent = perm === 'granted' ? 'Notifications activées ✓' : 'Notifications refusées';
+});
+
+document.getElementById('createSchedBtn').addEventListener('click', () => {
+  const type = schedTypeSelect.value;
+  const subject = document.getElementById('schedSubject').value.trim();
+  const body = document.getElementById('schedBody').value.trim();
+  const when = document.getElementById('schedWhen').value;
+  const recipients = getSelected('schedRecipientPicker');
+  const batchSize = Math.max(1, parseInt(document.getElementById('schedBatchSize').value) || 15);
+  if(!body){ alert('Écrivez un message.'); return; }
+  if(!when){ alert('Choisissez une date et une heure.'); return; }
+  if(!recipients.length){ alert('Sélectionnez au moins un destinataire.'); return; }
+  if(type === 'email' && !subject){ alert("Écrivez un objet pour l'e-mail."); return; }
+
+  db.scheduled.push({
+    id: 's' + Date.now(),
+    type, subject, body, batchSize,
+    senderLabel: type === 'sms' ? getSchedSenderLabel() : '',
+    when: new Date(when).getTime(),
+    recipientIds: recipients.map(c => c.id),
+    status: 'pending', // pending -> ready -> done
+  });
+  saveDB();
+  document.getElementById('schedSubject').value = '';
+  document.getElementById('schedBody').value = '';
+  document.getElementById('schedWhen').value = '';
+  renderSchedList();
+});
+
+function typeLabel(type){
+  return type === 'email' ? 'E-mail' : (type === 'whatsapp' ? 'WhatsApp' : 'SMS');
+}
+
+function renderSchedList(){
+  const el = document.getElementById('schedList');
+  if(!db.scheduled.length){ el.innerHTML = '<div class="empty">Aucun rappel programmé.</div>'; return; }
+
+  const sorted = [...db.scheduled].sort((a,b) => a.when - b.when);
+  el.innerHTML = sorted.map(s => {
+    const d = new Date(s.when);
+    const dateStr = d.toLocaleString('fr-FR', { dateStyle: 'medium', timeStyle: 'short' });
+    const excerpt = s.body.length > 60 ? s.body.slice(0,60) + '…' : s.body;
+    const statusLabel = s.status === 'done' ? '✓ Envoyé' : (s.status === 'ready' ? '● Prêt à envoyer' : '○ À venir');
+    const statusColor = s.status === 'done' ? '#2496C7' : (s.status === 'ready' ? '#C43E71' : 'var(--text-dim)');
+    return `<div class="batch" id="sched-${s.id}">
+      <div class="batch-head">
+        <span class="label">${typeLabel(s.type)} · ${dateStr}</span>
+        <span class="count" style="color:${statusColor};font-weight:700;">${statusLabel}</span>
+      </div>
+      <div class="list-item" style="border:none;padding:4px 0;">
+        <div class="info">
+          <div class="name" style="font-weight:500;font-size:13.5px;">${escapeHtml(excerpt)}</div>
+          <div class="meta">${s.recipientIds.length} destinataire(s)${s.type !== 'whatsapp' ? ' · lots de '+s.batchSize : ''}</div>
+        </div>
+      </div>
+      <div class="row" style="margin-top:8px;">
+        ${s.status !== 'done' ? `<button class="btn btn-secondary btn-small" data-open-sched="${s.id}">Ouvrir les envois</button>` : ''}
+        <button class="btn btn-danger btn-small" data-del-sched="${s.id}" style="flex:0 0 auto;">Suppr.</button>
+      </div>
+      <div id="sched-batches-${s.id}"></div>
+    </div>`;
+  }).join('');
+
+  el.querySelectorAll('[data-del-sched]').forEach(b => {
+    b.addEventListener('click', () => {
+      db.scheduled = db.scheduled.filter(s => s.id !== b.dataset.delSched);
+      saveDB(); renderSchedList();
+    });
+  });
+  el.querySelectorAll('[data-open-sched]').forEach(b => {
+    b.addEventListener('click', () => openScheduledBatches(b.dataset.openSched));
+  });
+}
+
+function openScheduledBatches(id){
+  const s = db.scheduled.find(x => x.id === id);
+  if(!s) return;
+
+  if(s.type === 'email'){
+    const recipients = db.contacts.filter(c => s.recipientIds.includes(c.id) && c.email);
+    if(!recipients.length){ alert('Aucun destinataire valide (e-mail manquant ?).'); return; }
+    const batches = [];
+    for(let i = 0; i < recipients.length; i += s.batchSize) batches.push(recipients.slice(i, i + s.batchSize));
+    renderBatches('sched-batches-' + id, batches, (batch) => {
+      const bcc = batch.map(c => c.email).join(',');
+      return `mailto:?bcc=${encodeURIComponent(bcc)}&subject=${encodeURIComponent(s.subject)}&body=${encodeURIComponent(s.body)}`;
+    }, 'email');
+
+  } else if(s.type === 'whatsapp'){
+    const recipients = db.contacts.filter(c => s.recipientIds.includes(c.id) && c.phone);
+    if(!recipients.length){ alert('Aucun destinataire valide (numéro manquant ?).'); return; }
+    // WhatsApp has no multi-recipient prefill — one link per contact, opened
+    // and sent individually, same principle as everywhere else in the app.
+    const container = document.getElementById('sched-batches-' + id);
+    container.innerHTML = recipients.map((c, i) => `
+      <div class="batch" style="padding:12px;">
+        <div class="batch-head" style="margin-bottom:0;">
+          <span class="label" style="font-size:13px;">${escapeHtml(c.name)} — ${escapeHtml(c.phone)}</span>
+          <a class="btn btn-primary btn-small" style="text-decoration:none;" target="_blank"
+             href="https://wa.me/${c.phone.replace('+','')}?text=${encodeURIComponent(s.body)}">Ouvrir WhatsApp</a>
+        </div>
+      </div>
+    `).join('');
+
+  } else {
+    const recipients = db.contacts.filter(c => s.recipientIds.includes(c.id) && c.phone);
+    if(!recipients.length){ alert('Aucun destinataire valide (numéro manquant ?).'); return; }
+    const batches = [];
+    for(let i = 0; i < recipients.length; i += s.batchSize) batches.push(recipients.slice(i, i + s.batchSize));
+    renderBatches('sched-batches-' + id, batches, (batch) => {
+      const numbers = batch.map(c => c.phone.replace(/\s+/g,'')).join(',');
+      return `sms:${numbers}?body=${encodeURIComponent(s.body)}`;
+    }, 'sms', s.senderLabel);
+  }
+
+  s.status = 'ready'; // stays ready until user deletes it; marking "done" is manual, like other batches
+  saveDB();
+  renderSchedList();
+}
+
+// Checks due reminders — runs on load and every 20s while the app is open.
+// Web technology has no reliable way to wake up a fully closed app at an
+// exact time, so this is honestly a "catch up when open" mechanism, not a
+// guaranteed background alarm.
+function checkSchedules(){
+  const now = Date.now();
+  let changed = false;
+  db.scheduled.forEach(s => {
+    if(s.status === 'pending' && s.when <= now){
+      s.status = 'ready';
+      changed = true;
+      if('Notification' in window && Notification.permission === 'granted'){
+        new Notification('SHAMAN PRODUCTION — rappel prêt', {
+          body: `Votre envoi programmé (${s.recipientIds.length} destinataires) est prêt.`,
+        });
+      }
+    }
+  });
+  if(changed){ saveDB(); if(document.getElementById('tab-scheduled').classList.contains('active')) renderSchedList(); }
+}
+setInterval(checkSchedules, 20000);
+
+/* ================= INIT ================= */
+refreshGroupSelect();
+refreshGroupChips();
+renderContactList();
+checkSchedules();
+renderSchedList();
 
 if('serviceWorker' in navigator){
   window.addEventListener('load', () => {
